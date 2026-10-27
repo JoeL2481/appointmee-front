@@ -158,6 +158,11 @@
   </div>
 </header>
 
+<div class="pointer-bee__trail" #beeTrail aria-hidden="true"></div>
+<div class="pointer-bee" #bee aria-hidden="true">
+  <img src="appointmee-logo.png" alt="" width="36" height="36" />
+</div>
+
 @if (mobileOpen()) {
   <div class="scrim" (click)="closeMobile()" aria-hidden="true"></div>
   <aside class="sheet" id="mobile-menu" aria-label="Menú de navegación">

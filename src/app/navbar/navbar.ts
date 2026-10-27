@@ -45,6 +45,16 @@ export class Navbar {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
+  private readonly bee = viewChild<ElementRef<HTMLElement>>('bee');
+  private readonly beeTrail = viewChild<ElementRef<HTMLElement>>('beeTrail');
+  private readonly beeMedia =
+    typeof window.matchMedia === 'function'
+      ? window.matchMedia('(pointer: fine) and (prefers-reduced-motion: no-preference)')
+      : null;
+  private beeFrame = 0;
+  private readonly beeTarget = { x: 0, y: 0 };
+  private readonly beePosition = { x: 0, y: 0 };
+  private readonly trailPosition = { x: 0, y: 0 };
 
   protected readonly mobileOpen = signal(false);
   protected readonly profileOpen = signal(false);
@@ -73,7 +83,10 @@ export class Navbar {
       )
       .subscribe(() => this.closeAll());
 
-    this.destroyRef.onDestroy(() => document.body.classList.remove('nav-locked'));
+    this.destroyRef.onDestroy(() => {
+      cancelAnimationFrame(this.beeFrame);
+      document.body.classList.remove('nav-locked');
+    });
   }
 
   @HostListener('document:click', ['$event'])
@@ -112,6 +125,93 @@ export class Navbar {
     if (window.innerWidth > 1024 && this.mobileOpen()) {
       this.closeMobile();
     }
+  }
+
+  @HostListener('document:pointermove', ['$event'])
+  protected onPointerMove(event: PointerEvent): void {
+    if (event.pointerType !== 'mouse' || !this.beeMedia?.matches) {
+      this.stopBee();
+      return;
+    }
+
+    const bee = this.bee()?.nativeElement;
+    const trail = this.beeTrail()?.nativeElement;
+
+    if (!bee || !trail) {
+      return;
+    }
+
+    this.beeTarget.x = Math.min(window.innerWidth - 24, Math.max(24, event.clientX + 18));
+    this.beeTarget.y = Math.min(window.innerHeight - 24, Math.max(24, event.clientY - 20));
+
+    if (!bee.classList.contains('is-active')) {
+      this.beePosition.x = this.beeTarget.x;
+      this.beePosition.y = this.beeTarget.y;
+      this.trailPosition.x = this.beeTarget.x;
+      this.trailPosition.y = this.beeTarget.y;
+      bee.style.transform = `translate3d(${this.beeTarget.x}px, ${this.beeTarget.y}px, 0) translate(-50%, -50%)`;
+      trail.style.transform = `translate3d(${this.beeTarget.x}px, ${this.beeTarget.y}px, 0) translate(-50%, -50%)`;
+      bee.classList.add('is-active');
+      trail.classList.add('is-active');
+    }
+
+    if (!this.beeFrame) {
+      this.beeFrame = requestAnimationFrame(this.tickBee);
+    }
+  }
+
+  @HostListener('document:mouseleave')
+  protected hideBee(): void {
+    this.stopBee();
+  }
+
+  @HostListener('window:blur')
+  protected onWindowBlur(): void {
+    this.stopBee();
+  }
+
+  private readonly tickBee = (): void => {
+    const bee = this.bee()?.nativeElement;
+    const trail = this.beeTrail()?.nativeElement;
+
+    if (!bee || !trail) {
+      this.beeFrame = 0;
+      return;
+    }
+
+    this.beePosition.x += (this.beeTarget.x - this.beePosition.x) * 0.18;
+    this.beePosition.y += (this.beeTarget.y - this.beePosition.y) * 0.18;
+    this.trailPosition.x += (this.beeTarget.x - this.trailPosition.x) * 0.07;
+    this.trailPosition.y += (this.beeTarget.y - this.trailPosition.y) * 0.07;
+
+    const dx = this.beeTarget.x - this.beePosition.x;
+    const dy = this.beeTarget.y - this.beePosition.y;
+    const angle = Math.max(-16, Math.min(16, dx * 0.45));
+
+    bee.style.transform = `translate3d(${this.beePosition.x}px, ${this.beePosition.y}px, 0) translate(-50%, -50%) rotate(${angle}deg)`;
+    trail.style.transform = `translate3d(${this.trailPosition.x}px, ${this.trailPosition.y}px, 0) translate(-50%, -50%)`;
+
+    const trailDx = this.beeTarget.x - this.trailPosition.x;
+    const trailDy = this.beeTarget.y - this.trailPosition.y;
+
+    if (
+      Math.abs(dx) < 0.2 &&
+      Math.abs(dy) < 0.2 &&
+      Math.abs(trailDx) < 0.2 &&
+      Math.abs(trailDy) < 0.2
+    ) {
+      this.beeFrame = 0;
+      return;
+    }
+
+    this.beeFrame = requestAnimationFrame(this.tickBee);
+  };
+
+  private stopBee(): void {
+    cancelAnimationFrame(this.beeFrame);
+    this.beeFrame = 0;
+    this.bee()?.nativeElement.classList.remove('is-active');
+    this.beeTrail()?.nativeElement.classList.remove('is-active');
   }
 
   protected toggleMobile(): void {

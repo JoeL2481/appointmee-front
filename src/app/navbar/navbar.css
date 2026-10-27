@@ -70,6 +70,52 @@
   margin: 0 auto;
 }
 
+.pointer-bee,
+.pointer-bee__trail {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1100;
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform;
+  transition: opacity 0.25s var(--ease);
+}
+
+.pointer-bee__trail {
+  width: 86px;
+  height: 86px;
+  background: radial-gradient(
+    circle,
+    rgba(247, 198, 90, 0.3),
+    rgba(247, 198, 90, 0.09) 42%,
+    transparent 70%
+  );
+}
+
+.pointer-bee {
+  width: 32px;
+  height: 32px;
+}
+
+.pointer-bee.is-active,
+.pointer-bee__trail.is-active {
+  opacity: 1;
+}
+
+.pointer-bee__trail.is-active {
+  animation: trail-pulse 1.8s ease-in-out infinite;
+}
+
+.pointer-bee img {
+  display: block;
+  width: 32px;
+  height: 32px;
+  filter: drop-shadow(0 0 6px rgba(247, 198, 90, 0.5)) drop-shadow(0 0 14px rgba(247, 198, 90, 0.2));
+  transform-origin: 50% 50%;
+  animation: bee-flit 2.4s ease-in-out infinite;
+}
+
 .brand {
   display: flex;
   align-items: center;
@@ -1036,6 +1082,28 @@
   }
 }
 
+@keyframes bee-flit {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-4deg);
+  }
+
+  50% {
+    transform: translateY(-3px) rotate(5deg);
+  }
+}
+
+@keyframes trail-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+
+  50% {
+    opacity: 0.95;
+  }
+}
+
 @keyframes link-shine {
   from {
     background-position: 200% 0;
@@ -1220,11 +1288,23 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .pointer-bee,
+  .pointer-bee__trail {
+    display: none;
+  }
+
   .navbar::after,
   .navbar *,
   .sheet * {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+@media (pointer: coarse) {
+  .pointer-bee,
+  .pointer-bee__trail {
+    display: none;
   }
 }
