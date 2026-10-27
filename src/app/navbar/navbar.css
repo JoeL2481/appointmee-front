@@ -243,7 +243,9 @@
   background-color: rgba(247, 198, 90, 0.09);
   transform: translateY(-2px);
   box-shadow: 0 8px 16px rgba(247, 198, 90, 0.12);
-  animation: link-shine 0.68s var(--ease);
+  animation:
+    link-shine 0.68s var(--ease),
+    link-glow 2s ease-in-out 0.68s infinite;
 }
 
 .nav__link:hover::before {
@@ -1041,6 +1043,19 @@
 
   to {
     background-position: -100% 0;
+  }
+}
+
+@keyframes link-glow {
+  0%,
+  100% {
+    box-shadow: 0 8px 16px rgba(247, 198, 90, 0.12);
+  }
+
+  50% {
+    box-shadow:
+      0 8px 22px rgba(247, 198, 90, 0.3),
+      0 0 0 1px rgba(247, 198, 90, 0.16);
   }
 }
 
