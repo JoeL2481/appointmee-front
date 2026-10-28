@@ -1,0 +1,100 @@
+<main class="detail-page" aria-live="polite">
+  <a class="back" routerLink="/mis-turnos">← Volver a mis turnos</a>
+  @if (loading()) {
+    <div class="state">
+      <span class="loader"></span>
+      <p>Cargando detalle...</p>
+    </div>
+  } @else if (error() && !appointment()) {
+    <div class="state state--error">
+      <h1>No pudimos abrir el turno</h1>
+      <p>{{ error() }}</p>
+    </div>
+  } @else if (appointment(); as item) {
+    <header>
+      <div>
+        <span class="eyebrow">Turno #{{ appointmentId() }}</span>
+        <h1>{{ item.servicio.nombre }}</h1>
+        <p>{{ item.fechaHora.replace('T', ' · ').slice(0, 18) }}</p>
+      </div>
+      <span class="status" [attr.data-status]="item.estadoTurno">{{
+        item.estadoTurno.replaceAll('_', ' ').toLocaleLowerCase('es-AR')
+      }}</span>
+    </header>
+    <section class="summary" aria-labelledby="summary-title">
+      <h2 id="summary-title">Resumen</h2>
+      <dl>
+        <div>
+          <dt>Profesional</dt>
+          <dd>{{ item.empleado.nombre }} {{ item.empleado.apellido }}</dd>
+        </div>
+        <div>
+          <dt>Duración</dt>
+          <dd>{{ item.servicio.duracion }} minutos</dd>
+        </div>
+        <div>
+          <dt>Precio</dt>
+          <dd>$ {{ item.servicio.precio }}</dd>
+        </div>
+        <div>
+          <dt>Reservado</dt>
+          <dd>{{ item.fechaReserva.replace('T', ' · ').slice(0, 18) }}</dd>
+        </div>
+      </dl>
+    </section>
+
+    @if (item.resenia; as review) {
+      <section class="review">
+        <span class="eyebrow">Tu experiencia</span>
+        <h2>Reseña publicada</h2>
+        <div class="stars" [attr.aria-label]="review.puntuacion + ' de 5 estrellas'">
+          {{ '★★★★★'.slice(0, review.puntuacion) }}
+        </div>
+        <p>{{ review.comentario || 'Sin comentario.' }}</p>
+        <small>{{ review.fechaResenia }}</small>
+      </section>
+    } @else if (item.estadoTurno === 'REALIZADO' || item.estadoTurno === 'CANCELADO') {
+      <section class="review" aria-labelledby="review-title">
+        <span class="eyebrow">Tu experiencia</span>
+        <h2 id="review-title">Calificá tu turno</h2>
+        <p>Tu opinión ayuda a otras personas a elegir.</p>
+        <form [formGroup]="reviewForm" (ngSubmit)="submitReview()">
+          <fieldset>
+            <legend>Puntuación</legend>
+            <div class="rating-options">
+              @for (score of [1, 2, 3, 4, 5]; track score) {
+                <label
+                  ><input type="radio" formControlName="puntuacion" [value]="score" /><span
+                    >{{ score }} <span aria-hidden="true">★</span></span
+                  ></label
+                >
+              }
+            </div>
+          </fieldset>
+          <label for="review-comment">Comentario <span>opcional</span></label
+          ><textarea
+            id="review-comment"
+            rows="5"
+            maxlength="400"
+            formControlName="comentario"
+            placeholder="Contanos cómo fue tu experiencia..."
+          ></textarea>
+          @if (reviewForm.controls.comentario.invalid && reviewForm.controls.comentario.touched) {
+            <p class="message message--error">
+              El comentario debe tener entre 8 y 400 caracteres, o quedar vacío.
+            </p>
+          }
+          @if (error()) {
+            <p class="message message--error" role="alert">{{ error() }}</p>
+          }
+          @if (success()) {
+            <p class="message message--success" role="status">{{ success() }}</p>
+          }
+          <button class="primary" type="submit" [disabled]="saving()">
+            {{ saving() ? 'Publicando...' : 'Publicar reseña' }}
+          </button>
+        </form>
+      </section>
+    }
+  }
+</main>

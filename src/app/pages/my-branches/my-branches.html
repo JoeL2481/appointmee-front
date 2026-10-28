@@ -1,0 +1,68 @@
+<main class="page-shell">
+  <header class="page-head">
+    <div>
+      <span class="eyebrow">Tu red de trabajo</span>
+      <h1>Mis sucursales</h1>
+      <p>Un único lugar para tus negocios y las sucursales donde formás parte del equipo.</p>
+    </div>
+    @if (canCreate()) {
+      <a class="create" routerLink="/sucursales/crear"><span>+</span>Nueva sucursal</a>
+    }
+  </header>
+
+  <div class="summary" aria-label="Resumen de sucursales">
+    <div>
+      <strong>{{ branches().length }}</strong
+      ><span>Total</span>
+    </div>
+    <div>
+      <strong>{{ owned().length }}</strong
+      ><span>Propias</span>
+    </div>
+    <div>
+      <strong>{{ associated().length }}</strong
+      ><span>Asociadas</span>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="state"><span class="loader"></span>Cargando sucursales...</div>
+  } @else if (error()) {
+    <div class="state state--error" role="alert">{{ error() }}</div>
+  } @else if (branches().length) {
+    <section class="branch-grid" aria-label="Listado de sucursales">
+      @for (branch of branches(); track branch.id) {
+        <article class="branch-card">
+          <div class="branch-photo">
+            @if (branch.fotoPerfil) {
+              <img [src]="branch.fotoPerfil" [alt]="branch.nombre" />
+            } @else {
+              <span aria-hidden="true">{{ branch.nombre[0] }}</span>
+            }
+            <span class="relationship">{{ relationship(branch.id) }}</span>
+          </div>
+          <div class="branch-body">
+            <span class="category">{{ categoryLabel(branch.categoria) }}</span>
+            <h2>{{ branch.nombre }}</h2>
+            <div class="rating">
+              <span aria-hidden="true">★</span><strong>{{ branch.puntuacion }}</strong
+              ><small>{{ branch.cantidadPuntuaciones }} reseñas</small>
+            </div>
+            <a [routerLink]="['/sucursales', branch.id]"
+              >Ver sucursal <span aria-hidden="true">→</span></a
+            >
+          </div>
+        </article>
+      }
+    </section>
+  } @else {
+    <div class="empty">
+      <span>+</span>
+      <h2>Todavía no hay sucursales</h2>
+      <p>Cuando crees una o te sumes a un equipo, aparecerá en este espacio.</p>
+      @if (canCreate()) {
+        <a routerLink="/sucursales/crear">Crear mi primera sucursal</a>
+      }
+    </div>
+  }
+</main>

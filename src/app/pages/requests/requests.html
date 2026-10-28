@@ -1,0 +1,179 @@
+<main class="page-shell">
+  <header class="page-head">
+    <div>
+      <span class="eyebrow">Bandeja de entrada</span>
+      <h1>Solicitudes</h1>
+      <p>Revisá cada pedido y tomá una decisión con toda la información.</p>
+    </div>
+    <div class="counter">
+      <strong>{{ total() }}</strong
+      ><span>{{ isAdmin() ? 'Pendientes' : 'Solicitudes' }}</span>
+    </div>
+  </header>
+
+  @if (error() && !employeeDetail() && !employerDetail()) {
+    <p class="banner banner--error" role="alert">{{ error() }}</p>
+  }
+
+  <section class="request-section">
+    <div class="section-head">
+      <div>
+        <span>Empleo</span>
+        <h2>Invitaciones recibidas</h2>
+      </div>
+      <span class="pill">{{ employeeRequests().length }}</span>
+    </div>
+    @if (loadingEmployee()) {
+      <div class="empty"><span class="loader"></span>Cargando invitaciones...</div>
+    } @else if (employeeRequests().length) {
+      <div class="request-list">
+        @for (request of employeeRequests(); track request.id) {
+          <button class="request-row" type="button" (click)="showEmployee(request.id)">
+            <span class="request-icon">S</span
+            ><span class="request-copy"
+              ><strong>{{ request.nombreSucursal }}</strong
+              ><small>Invitación para sumarte al equipo</small></span
+            ><time>{{ request.fechaSolicitud | date: 'dd MMM yyyy' }}</time
+            ><span class="arrow">→</span>
+          </button>
+        }
+      </div>
+    } @else {
+      <div class="empty">No tenés invitaciones de empleado pendientes.</div>
+    }
+  </section>
+
+  <section class="request-section" [class.request-section--admin]="isAdmin()">
+    <div class="section-head">
+      <div>
+        <span>{{ isAdmin() ? 'Administración' : 'Cuenta de empleador' }}</span>
+        <h2>{{ isAdmin() ? 'Solicitudes de empleador' : 'Mis solicitudes de empleador' }}</h2>
+      </div>
+      <span class="pill">{{ employerRequests().length }}</span>
+    </div>
+    @if (loadingEmployer()) {
+      <div class="empty"><span class="loader"></span>Cargando solicitudes...</div>
+    } @else if (employerRequests().length) {
+      <div class="request-list">
+        @for (request of employerRequests(); track request.id) {
+          <button class="request-row" type="button" (click)="showEmployer(request.id)">
+            <span class="request-icon"
+              >{{ request.nombreUsuario[0] }}{{ request.apellidoUsuario[0] }}</span
+            ><span class="request-copy"
+              ><strong>{{ request.nombreUsuario }} {{ request.apellidoUsuario }}</strong
+              ><small>{{
+                isAdmin() ? 'Solicita permisos de empleador' : 'Solicitud enviada'
+              }}</small></span
+            ><time>{{ request.fechaSolicitud | date: 'dd MMM yyyy' }}</time
+            ><span class="arrow">→</span>
+          </button>
+        }
+      </div>
+    } @else {
+      <div class="empty">
+        {{
+          isAdmin()
+            ? 'No hay solicitudes de empleador pendientes.'
+            : 'No enviaste solicitudes de empleador.'
+        }}
+      </div>
+    }
+  </section>
+
+  @if (loadingDetail() || employeeDetail() || employerDetail()) {
+    <div class="dialog-backdrop" (click)="closeDetail()">
+      <section
+        class="dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="detail-title"
+        (click)="$event.stopPropagation()"
+      >
+        <button class="dialog-close" type="button" (click)="closeDetail()" aria-label="Cerrar">
+          ×
+        </button>
+        @if (loadingDetail()) {
+          <div class="dialog-loading"><span class="loader"></span>Cargando detalle...</div>
+        } @else if (employeeDetail(); as detail) {
+          <span class="eyebrow">Invitación laboral</span>
+          <h2 id="detail-title">{{ detail.sucursal.nombre }}</h2>
+          <p class="dialog-copy">Te invitaron a formar parte del equipo de esta sucursal.</p>
+          <dl>
+            <div>
+              <dt>Solicitante</dt>
+              <dd>{{ detail.empleado.nombre }} {{ detail.empleado.apellido }}</dd>
+            </div>
+            <div>
+              <dt>Categoría</dt>
+              <dd>{{ detail.sucursal.categoria }}</dd>
+            </div>
+            <div>
+              <dt>Fecha</dt>
+              <dd>{{ detail.fechaSolicitud | date: 'dd/MM/yyyy' }}</dd>
+            </div>
+          </dl>
+          @if (error()) {
+            <p class="banner banner--error" role="alert">{{ error() }}</p>
+          }
+          <div class="dialog-actions">
+            <button
+              class="button button--reject"
+              type="button"
+              [disabled]="resolving()"
+              (click)="resolveEmployee(false)"
+            >
+              Rechazar</button
+            ><button
+              class="button button--approve"
+              type="button"
+              [disabled]="resolving()"
+              (click)="resolveEmployee(true)"
+            >
+              Aprobar
+            </button>
+          </div>
+        } @else if (employerDetail(); as detail) {
+          <span class="eyebrow">Solicitud de empleador</span>
+          <h2 id="detail-title">{{ detail.usuario.nombre }} {{ detail.usuario.apellido }}</h2>
+          <p class="dialog-copy">{{ detail.motivo }}</p>
+          <dl>
+            <div>
+              <dt>Correo</dt>
+              <dd>{{ detail.usuario.email }}</dd>
+            </div>
+            <div>
+              <dt>Estado</dt>
+              <dd>{{ detail.estado }}</dd>
+            </div>
+            <div>
+              <dt>Fecha</dt>
+              <dd>{{ detail.fechaSolicitud | date: 'dd/MM/yyyy' }}</dd>
+            </div>
+          </dl>
+          @if (error()) {
+            <p class="banner banner--error" role="alert">{{ error() }}</p>
+          }
+          @if (isAdmin()) {
+            <div class="dialog-actions">
+              <button
+                class="button button--reject"
+                type="button"
+                [disabled]="resolving()"
+                (click)="resolveEmployer(false)"
+              >
+                Rechazar</button
+              ><button
+                class="button button--approve"
+                type="button"
+                [disabled]="resolving()"
+                (click)="resolveEmployer(true)"
+              >
+                Aprobar
+              </button>
+            </div>
+          }
+        }
+      </section>
+    </div>
+  }
+</main>

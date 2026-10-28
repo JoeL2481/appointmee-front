@@ -1,0 +1,510 @@
+<main class="dashboard">
+  <header class="hero">
+    <div>
+      <span class="eyebrow">Panel empleador</span>
+      <h1>Tu operación, <em>en orden.</em></h1>
+      <p>Administrá sedes, servicios, agenda y equipo desde un único espacio.</p>
+    </div>
+    <div class="hero__metric">
+      <strong>{{ branches().length }}</strong>
+      <span>{{ branches().length === 1 ? 'sucursal activa' : 'sucursales activas' }}</span>
+    </div>
+  </header>
+
+  @if (error()) {
+    <div class="alert alert--error" role="alert">{{ error() }}</div>
+  }
+  @if (notice()) {
+    <div class="alert alert--success" role="status">{{ notice() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="loading"><span></span> Cargando panel…</div>
+  } @else {
+    <section class="toolbar">
+      <label>
+        <span>Sucursal de trabajo</span>
+        <select [value]="selectedBranchId() ?? ''" (change)="branchChanged($event)">
+          @for (branch of branches(); track branch.id) {
+            <option [value]="branch.id">{{ branch.nombre }}</option>
+          }
+        </select>
+      </label>
+      @if (selectedBranch()) {
+        <div class="toolbar__identity">
+          <span>{{ formatCategory(selectedBranch()!.categoria) }}</span>
+          <strong>{{ selectedBranch()!.nombre }}</strong>
+        </div>
+      }
+    </section>
+
+    <nav class="tabs" aria-label="Secciones del panel">
+      <button
+        type="button"
+        [class.active]="activeTab() === 'branches'"
+        (click)="setTab('branches')"
+      >
+        Sucursales
+      </button>
+      <button
+        type="button"
+        [class.active]="activeTab() === 'services'"
+        (click)="setTab('services')"
+      >
+        Servicios <span>{{ services().length }}</span>
+      </button>
+      <button
+        type="button"
+        [class.active]="activeTab() === 'appointments'"
+        (click)="setTab('appointments')"
+      >
+        Turnos <span>{{ pendingAppointments() }}</span>
+      </button>
+      <button
+        type="button"
+        [class.active]="activeTab() === 'employees'"
+        (click)="setTab('employees')"
+      >
+        Equipo <span>{{ employees().length }}</span>
+      </button>
+    </nav>
+
+    @if (activeTab() === 'branches') {
+      <section class="content-grid">
+        <article class="panel">
+          <div class="panel__heading">
+            <div>
+              <span class="kicker">Portfolio</span>
+              <h2>Mis sucursales</h2>
+            </div>
+            <button class="button button--quiet" type="button" (click)="newBranch()">Nueva</button>
+          </div>
+          @if (branches().length) {
+            <div class="cards">
+              @for (branch of branches(); track branch.id) {
+                <button
+                  class="branch-card"
+                  [class.selected]="selectedBranchId() === branch.id"
+                  type="button"
+                  (click)="selectBranch(branch.id)"
+                >
+                  <span class="branch-card__image">
+                    @if (branch.fotoPerfil) {
+                      <img [src]="branch.fotoPerfil" [alt]="branch.nombre" />
+                    }
+                  </span>
+                  <span
+                    ><strong>{{ branch.nombre }}</strong
+                    ><small>{{ formatCategory(branch.categoria) }}</small></span
+                  >
+                  <b>{{ branch.puntuacion.toFixed(1) }} ★</b>
+                </button>
+              }
+            </div>
+          } @else {
+            <div class="empty">
+              <strong>Todavía no hay sucursales</strong>
+              <p>Completá el formulario para publicar la primera.</p>
+            </div>
+          }
+
+          @if (branchDetails(); as branch) {
+            <div class="detail">
+              <div class="detail__title">
+                <div>
+                  <span class="kicker">Seleccionada</span>
+                  <h3>{{ branch.nombre }}</h3>
+                </div>
+                <button class="text-button" type="button" (click)="editBranch()">
+                  Editar datos
+                </button>
+              </div>
+              <p>{{ branch.descripcion }}</p>
+              <dl>
+                <div>
+                  <dt>Dirección</dt>
+                  <dd>{{ branch.direccion }}</dd>
+                </div>
+                <div>
+                  <dt>Horario</dt>
+                  <dd>{{ branch.horaApertura }} a {{ branch.horaCierre }}</dd>
+                </div>
+                <div>
+                  <dt>Teléfono</dt>
+                  <dd>{{ branch.telefono || 'Sin informar' }}</dd>
+                </div>
+              </dl>
+              <div class="gallery">
+                @for (image of branch.imagenes; track image.id) {
+                  <figure>
+                    <img [src]="image.url" alt="Imagen de la sucursal" /><button
+                      type="button"
+                      aria-label="Eliminar imagen"
+                      (click)="deleteImage(image.id)"
+                    >
+                      ×
+                    </button>
+                  </figure>
+                }
+              </div>
+              <form class="inline-form" [formGroup]="imageForm" (ngSubmit)="addImage()">
+                <input
+                  formControlName="url"
+                  type="url"
+                  placeholder="https://… imagen para la galería"
+                  aria-label="URL de imagen"
+                />
+                <button
+                  class="button button--quiet"
+                  type="submit"
+                  [disabled]="busy() === 'image-add'"
+                >
+                  Agregar imagen
+                </button>
+              </form>
+            </div>
+          }
+        </article>
+
+        <article class="panel panel--form">
+          <div class="panel__heading">
+            <div>
+              <span class="kicker">{{ editingBranchId() ? 'Edición' : 'Alta' }}</span>
+              <h2>{{ editingBranchId() ? 'Actualizar sucursal' : 'Nueva sucursal' }}</h2>
+            </div>
+          </div>
+          <form [formGroup]="branchForm" (ngSubmit)="saveBranch()">
+            <label
+              ><span>Nombre</span><input formControlName="nombre" placeholder="Estudio Centro"
+            /></label>
+            <label
+              ><span>Dirección</span
+              ><input formControlName="direccion" placeholder="Av. Corrientes 1234"
+            /></label>
+            <div class="form-row">
+              <label
+                ><span>Teléfono</span
+                ><input formControlName="telefono" inputmode="numeric" placeholder="1144445555"
+              /></label>
+              <label
+                ><span>Categoría</span
+                ><select formControlName="categoria">
+                  <option value="">Seleccionar</option>
+                  @for (category of categories(); track category) {
+                    <option [value]="category">{{ formatCategory(category) }}</option>
+                  }
+                </select></label
+              >
+            </div>
+            <label
+              ><span>Descripción</span
+              ><textarea
+                formControlName="descripcion"
+                rows="4"
+                placeholder="Contá qué hace especial a esta sede"
+              ></textarea>
+            </label>
+            <div class="form-row">
+              <label
+                ><span>Apertura</span><input formControlName="horaApertura" type="time"
+              /></label>
+              <label><span>Cierre</span><input formControlName="horaCierre" type="time" /></label>
+            </div>
+            <label
+              ><span>Foto de portada (URL)</span
+              ><input formControlName="fotoUrl" type="url" placeholder="https://…"
+            /></label>
+            @if (branchForm.invalid && branchForm.touched) {
+              <p class="form-error">Revisá los campos marcados y sus longitudes.</p>
+            }
+            <div class="form-actions">
+              <button
+                class="button button--primary"
+                type="submit"
+                [disabled]="busy() === 'branch-save'"
+              >
+                {{ busy() === 'branch-save' ? 'Guardando…' : 'Guardar sucursal' }}
+              </button>
+              @if (editingBranchId()) {
+                <button class="button button--quiet" type="button" (click)="newBranch()">
+                  Cancelar edición
+                </button>
+              }
+            </div>
+          </form>
+          @if (selectedBranchId()) {
+            <button class="danger-link" type="button" (click)="deleteBranch()">
+              Eliminar sucursal seleccionada
+            </button>
+          }
+        </article>
+      </section>
+    }
+
+    @if (activeTab() === 'services') {
+      <section class="content-grid">
+        <article class="panel">
+          <div class="panel__heading">
+            <div>
+              <span class="kicker">Catálogo</span>
+              <h2>Servicios publicados</h2>
+            </div>
+            <button class="button button--quiet" type="button" (click)="newService()">Nuevo</button>
+          </div>
+          @if (!selectedBranchId()) {
+            <div class="empty">
+              <strong>Elegí una sucursal</strong>
+              <p>Los servicios se organizan por sede.</p>
+            </div>
+          }
+          <div class="service-list">
+            @for (service of services(); track service.id) {
+              <article class="service-card">
+                <div class="service-card__image">
+                  @if (service.fotoPerfil) {
+                    <img [src]="service.fotoPerfil" [alt]="service.nombre" />
+                  } @else {
+                    <span>{{ service.nombre.charAt(0) }}</span>
+                  }
+                </div>
+                <div>
+                  <h3>{{ service.nombre }}</h3>
+                  <p>{{ service.duracion }} min · {{ service.puntuacion.toFixed(1) }} ★</p>
+                </div>
+                <div class="row-actions">
+                  <button type="button" (click)="editService(service.id)">Editar</button
+                  ><button class="danger" type="button" (click)="deleteService(service)">
+                    Eliminar
+                  </button>
+                </div>
+              </article>
+            } @empty {
+              @if (selectedBranchId()) {
+                <div class="empty">
+                  <strong>Catálogo vacío</strong>
+                  <p>Creá un servicio para empezar a recibir reservas.</p>
+                </div>
+              }
+            }
+          </div>
+        </article>
+        <article class="panel panel--form">
+          <div class="panel__heading">
+            <div>
+              <span class="kicker">{{ editingServiceId() ? 'Edición' : 'Alta' }}</span>
+              <h2>{{ editingServiceId() ? 'Actualizar servicio' : 'Nuevo servicio' }}</h2>
+            </div>
+          </div>
+          <form [formGroup]="serviceForm" (ngSubmit)="saveService()">
+            <label
+              ><span>Nombre</span><input formControlName="nombre" placeholder="Corte y styling"
+            /></label>
+            <label
+              ><span>Descripción</span
+              ><textarea
+                formControlName="descripcion"
+                rows="4"
+                placeholder="Detalle del servicio"
+              ></textarea>
+            </label>
+            <div class="form-row">
+              <label
+                ><span>Duración (min)</span
+                ><input formControlName="duracion" type="number" min="30" max="360" /></label
+              ><label
+                ><span>Precio</span
+                ><input
+                  formControlName="precio"
+                  type="number"
+                  min="0.01"
+                  max="999999.99"
+                  step="0.01"
+              /></label>
+            </div>
+            <label
+              ><span>Foto (URL)</span
+              ><input formControlName="fotoUrl" type="url" placeholder="https://…"
+            /></label>
+            @if (serviceForm.invalid && serviceForm.touched) {
+              <p class="form-error">Completá los datos válidos del servicio.</p>
+            }
+            <div class="form-actions">
+              <button
+                class="button button--primary"
+                type="submit"
+                [disabled]="!selectedBranchId() || busy() === 'service-save'"
+              >
+                {{ busy() === 'service-save' ? 'Guardando…' : 'Guardar servicio' }}
+              </button>
+              @if (editingServiceId()) {
+                <button class="button button--quiet" type="button" (click)="newService()">
+                  Cancelar
+                </button>
+              }
+            </div>
+          </form>
+        </article>
+      </section>
+    }
+
+    @if (activeTab() === 'appointments') {
+      <section class="panel">
+        <div class="panel__heading panel__heading--wrap">
+          <div>
+            <span class="kicker">Agenda</span>
+            <h2>Turnos de la sucursal</h2>
+          </div>
+          <label class="compact-field"
+            ><span>Estado</span
+            ><select [value]="appointmentStatus()" (change)="statusChanged($event)">
+              <option value="PENDIENTE">Pendientes</option>
+              <option value="REALIZADO">Realizados</option>
+              <option value="CANCELADO">Cancelados</option>
+              <option value="PAGO_RECHAZADO">Pago rechazado</option>
+            </select></label
+          >
+        </div>
+        @if (workspaceLoading()) {
+          <div class="loading loading--inline"><span></span> Actualizando agenda…</div>
+        }
+        <div class="appointment-layout">
+          <div class="appointment-list">
+            @for (appointment of appointments(); track appointment.id) {
+              <button class="appointment" type="button" (click)="showAppointment(appointment.id)">
+                <time>{{ formatDate(appointment.fechaTurno) }}</time
+                ><strong>{{ appointment.nombreServicio }}</strong
+                ><span class="status" [attr.data-status]="appointment.estadoTurno">{{
+                  appointment.estadoTurno.replaceAll('_', ' ')
+                }}</span>
+              </button>
+            } @empty {
+              <div class="empty">
+                <strong>No hay turnos en este estado</strong>
+                <p>Probá con otro filtro de agenda.</p>
+              </div>
+            }
+          </div>
+          @if (appointmentDetails(); as appointment) {
+            <aside class="appointment-detail">
+              <span class="kicker">Detalle #{{ appointment.id }}</span>
+              <h3>{{ appointment.servicio.nombre }}</h3>
+              <p class="appointment-detail__date">{{ formatDate(appointment.fechaTurno) }}</p>
+              <dl>
+                <div>
+                  <dt>Cliente</dt>
+                  <dd>{{ appointment.cliente.nombre }} {{ appointment.cliente.apellido }}</dd>
+                </div>
+                <div>
+                  <dt>Profesional</dt>
+                  <dd>{{ appointment.empleado.nombre }} {{ appointment.empleado.apellido }}</dd>
+                </div>
+                <div>
+                  <dt>Duración</dt>
+                  <dd>{{ appointment.servicio.duracion }} min</dd>
+                </div>
+                <div>
+                  <dt>Precio</dt>
+                  <dd>${{ appointment.servicio.precio }}</dd>
+                </div>
+              </dl>
+              @if (appointment.estadoTurno === 'PENDIENTE') {
+                <div class="form-actions">
+                  <button
+                    class="button button--primary"
+                    type="button"
+                    (click)="completeAppointment(appointment.id)"
+                  >
+                    Finalizar</button
+                  ><button
+                    class="button button--danger"
+                    type="button"
+                    (click)="cancelAppointment(appointment.id)"
+                  >
+                    Cancelar turno
+                  </button>
+                </div>
+              }
+            </aside>
+          } @else {
+            <aside class="appointment-detail appointment-detail--empty">
+              <p>Seleccioná un turno para ver cliente, profesional y servicio.</p>
+            </aside>
+          }
+        </div>
+      </section>
+    }
+
+    @if (activeTab() === 'employees') {
+      <section class="content-grid content-grid--team">
+        <article class="panel">
+          <div class="panel__heading">
+            <div>
+              <span class="kicker">Personas</span>
+              <h2>Equipo de la sucursal</h2>
+            </div>
+          </div>
+          <div class="employee-list">
+            @for (employee of employees(); track employee.id) {
+              <article class="employee">
+                <div class="avatar">
+                  @if (employee.urlFotoPerfil) {
+                    <img [src]="employee.urlFotoPerfil" alt="" />
+                  } @else {
+                    {{ employee.nombre.charAt(0) }}{{ employee.apellido.charAt(0) }}
+                  }
+                </div>
+                <div>
+                  <strong>{{ employee.nombre }} {{ employee.apellido }}</strong
+                  ><span>{{ employee.email }}</span>
+                </div>
+                <button class="danger-link" type="button" (click)="removeEmployee(employee)">
+                  Desvincular
+                </button>
+              </article>
+            } @empty {
+              <div class="empty">
+                <strong>Equipo sin integrantes</strong>
+                <p>Invitá una persona por correo o sumate a la atención.</p>
+              </div>
+            }
+          </div>
+        </article>
+        <article class="panel panel--form">
+          <div class="panel__heading">
+            <div>
+              <span class="kicker">Invitación</span>
+              <h2>Sumar al equipo</h2>
+            </div>
+          </div>
+          <p class="panel__intro">
+            La persona recibirá una solicitud para asociarse a esta sucursal.
+          </p>
+          <form [formGroup]="inviteForm" (ngSubmit)="inviteEmployee()">
+            <label
+              ><span>Correo del usuario</span
+              ><input
+                formControlName="email"
+                type="email"
+                placeholder="persona@correo.com" /></label
+            ><button
+              class="button button--primary"
+              type="submit"
+              [disabled]="!selectedBranchId() || busy() === 'invite'"
+            >
+              Enviar invitación
+            </button>
+          </form>
+          <div class="divider"><span>o</span></div>
+          <button
+            class="button button--quiet button--full"
+            type="button"
+            (click)="becomeEmployee()"
+            [disabled]="!selectedBranchId() || busy() === 'become-employee'"
+          >
+            Sumarme como empleado
+          </button>
+        </article>
+      </section>
+    }
+  }
+</main>

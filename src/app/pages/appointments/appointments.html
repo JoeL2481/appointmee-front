@@ -1,0 +1,81 @@
+<main class="appointments-page" aria-live="polite">
+  <header>
+    <span class="eyebrow">Tu agenda</span>
+    <h1>Mis turnos</h1>
+    <p>Consultá el estado y los detalles de todas tus reservas.</p>
+  </header>
+  @if (notice()) {
+    <div class="state" role="status">
+      <p>{{ notice() }}</p>
+    </div>
+  }
+  <div class="filters" role="group" aria-label="Filtrar turnos por estado">
+    <button
+      type="button"
+      [class.active]="selectedStatus() === null"
+      (click)="selectedStatus.set(null)"
+    >
+      Todos <span>{{ appointments().length }}</span>
+    </button>
+    @for (status of statuses; track status) {
+      <button
+        type="button"
+        [class.active]="selectedStatus() === status"
+        (click)="selectedStatus.set(status)"
+      >
+        {{ statusLabel(status) }}
+      </button>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="state">
+      <span class="loader"></span>
+      <p>Cargando tus turnos...</p>
+    </div>
+  } @else if (error()) {
+    <div class="state state--error">
+      <strong>No pudimos cargar tu agenda</strong>
+      <p>{{ error() }}</p>
+    </div>
+  } @else if (filteredAppointments().length === 0) {
+    <div class="state">
+      <strong>No hay turnos en esta vista</strong>
+      <p>Explorá el catálogo para hacer una nueva reserva.</p>
+      <a routerLink="/">Buscar sucursales</a>
+    </div>
+  } @else {
+    <section class="list" aria-label="Listado de turnos">
+      @for (appointment of filteredAppointments(); track appointment.id) {
+        <article class="appointment">
+          <div class="date" aria-hidden="true">
+            <strong>{{ appointment.fechaTurno.slice(8, 10) }}</strong
+            ><span
+              >{{ appointment.fechaTurno.slice(5, 7) }}/{{
+                appointment.fechaTurno.slice(0, 4)
+              }}</span
+            >
+          </div>
+          <div class="appointment__main">
+            <span class="status" [attr.data-status]="appointment.estadoTurno">{{
+              statusLabel(appointment.estadoTurno)
+            }}</span>
+            <h2>{{ appointment.nombreServicio }}</h2>
+            <p>{{ appointment.fechaTurno.replace('T', ' · ').slice(0, 18) }}</p>
+          </div>
+          @if (appointment.puntuacion) {
+            <span class="score" [attr.aria-label]="appointment.puntuacion + ' estrellas'"
+              ><span aria-hidden="true">★</span> {{ appointment.puntuacion }}</span
+            >
+          }
+          <a
+            class="detail-link"
+            [routerLink]="['/mis-turnos', appointment.id]"
+            [attr.aria-label]="'Ver detalle de ' + appointment.nombreServicio"
+            >Ver detalle <span aria-hidden="true">→</span></a
+          >
+        </article>
+      }
+    </section>
+  }
+</main>

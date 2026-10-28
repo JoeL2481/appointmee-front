@@ -1,59 +1,51 @@
-# Appointmee
+# AppointMee Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.1.7.
+Frontend de AppointMee migrado a Angular 22. El backend Spring Boot se mantiene en el repositorio separado `AppointMee`.
 
-## Development server
+## Requisitos
 
-To start a local development server, run:
+- Node.js compatible con Angular 22
+- npm 11
+- Backend disponible en `http://localhost:8080`
 
-```bash
-ng serve
-```
-
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## Desarrollo
 
 ```bash
-ng generate component component-name
+npm ci
+npm start
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+La aplicación queda disponible en `http://localhost:4200`. `proxy.conf.json` reenvía al backend las rutas `/usuarios`, `/sucursales`, `/servicios`, `/turnos`, `/solicitudes-empleador`, `/solicitudes-empleado` y `/pagos`.
+
+## Verificación
 
 ```bash
-ng generate --help
+npm test -- --watch=false
+npm run build
 ```
 
-## Building
+## Arquitectura
 
-To build the project run:
-
-```bash
-ng build
+```text
+src/app/
+├── common/       # Guards e interceptores
+├── components/   # Componentes visuales reutilizables
+├── models/       # Contratos TypeScript de la API
+├── pages/        # Componentes lazy que representan rutas
+├── services/     # Estado, almacenamiento y acceso HTTP
+├── app.config.ts
+└── app.routes.ts
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+La aplicación utiliza componentes standalone, Signals, formularios reactivos, rutas lazy, `HttpClient`, interceptores funcionales, guardas por rol y detección de cambios `OnPush`.
 
-## Running unit tests
+## Compatibilidad
 
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
+- Se conserva el token JWT bajo `localStorage["token"]`.
+- Los requests mantienen las rutas, payloads y enums del backend existente.
+- La API se consume en el mismo origen en producción.
+- No se incorporaron librerías de UI.
 
-```bash
-ng test
-```
+## Integración pendiente del backend
 
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Para desplegar la SPA, Spring o el proxy de producción debe servir el build Angular y redirigir las rutas que no sean API a `index.html`. También permanecen bloqueos del backend existente en recuperación de cuenta, eliminación de servicios, IDs de categorías y respuesta de creación de turnos.

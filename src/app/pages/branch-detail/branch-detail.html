@@ -1,0 +1,140 @@
+<main class="detail-page" aria-live="polite">
+  @if (loading()) {
+    <div class="state">
+      <span class="loader"></span>
+      <p>Cargando sucursal...</p>
+    </div>
+  } @else if (error()) {
+    <div class="state state--error">
+      <h1>No pudimos abrir la sucursal</h1>
+      <p>{{ error() }}</p>
+      <a routerLink="/">Volver al catálogo</a>
+    </div>
+  } @else if (branch(); as item) {
+    <a class="back" routerLink="/">← Volver al catálogo</a>
+    <section class="hero">
+      <div class="hero__image">
+        @if (item.fotoPerfil) {
+          <img [src]="item.fotoPerfil" [alt]="'Vista de ' + item.nombre" />
+        }
+      </div>
+      <div class="hero__content">
+        <span class="eyebrow">{{ categoryLabel(item.categoria) }}</span>
+        <h1>{{ item.nombre }}</h1>
+        <div class="rating">
+          <span aria-hidden="true">★</span> {{ item.puntuacion.toFixed(1) }}
+          <small>{{ item.cantidadPuntuaciones }} reseñas</small>
+        </div>
+        <p>{{ item.descripcion }}</p>
+        <dl class="facts">
+          <div>
+            <dt>Dirección</dt>
+            <dd>{{ item.direccion }}</dd>
+          </div>
+          <div>
+            <dt>Horario</dt>
+            <dd>{{ item.horaApertura }} a {{ item.horaCierre }}</dd>
+          </div>
+          @if (item.telefono) {
+            <div>
+              <dt>Teléfono</dt>
+              <dd>
+                <a [href]="'tel:' + item.telefono">{{ item.telefono }}</a>
+              </dd>
+            </div>
+          }
+        </dl>
+        <a class="primary" [routerLink]="['/reservar', item.id]">Reservar un turno</a>
+      </div>
+    </section>
+
+    <section class="block" aria-labelledby="services-title">
+      <div class="section-head">
+        <span>Servicios</span>
+        <h2 id="services-title">Elegí tu experiencia</h2>
+      </div>
+      @if (services().length) {
+        <div class="service-grid">
+          @for (service of services(); track service.id) {
+            <article class="service-card">
+              @if (service.fotoPerfil) {
+                <img [src]="service.fotoPerfil" alt="" />
+              }
+              <div>
+                <h3>{{ service.nombre }}</h3>
+                <p>{{ service.duracion }} minutos</p>
+                <span class="rating"
+                  ><span aria-hidden="true">★</span> {{ service.puntuacion.toFixed(1) }}</span
+                >
+              </div>
+            </article>
+          }
+        </div>
+      } @else {
+        <p class="empty">Esta sucursal todavía no publicó servicios.</p>
+      }
+    </section>
+
+    <section class="block" aria-labelledby="team-title">
+      <div class="section-head">
+        <span>Equipo</span>
+        <h2 id="team-title">Profesionales</h2>
+      </div>
+      @if (employees().length) {
+        <div class="team-grid">
+          @for (
+            employee of employees();
+            track employee.nombre + '-' + employee.apellido + '-' + $index
+          ) {
+            <article class="person">
+              <span class="avatar" aria-hidden="true"
+                >{{ employee.nombre.charAt(0) }}{{ employee.apellido.charAt(0) }}</span
+              >
+              <div>
+                <h3>{{ employee.nombre }} {{ employee.apellido }}</h3>
+              </div>
+            </article>
+          }
+        </div>
+      } @else {
+        <p class="empty">No hay profesionales disponibles por el momento.</p>
+      }
+    </section>
+
+    @if (gallery().length) {
+      <section class="block" aria-labelledby="gallery-title">
+        <div class="section-head">
+          <span>Espacio</span>
+          <h2 id="gallery-title">Galería</h2>
+        </div>
+        <div class="gallery">
+          @for (image of gallery(); track image.id) {
+            <img [src]="image.url" [alt]="'Galería de ' + item.nombre" loading="lazy" />
+          }
+        </div>
+      </section>
+    }
+
+    <section class="block" aria-labelledby="reviews-title">
+      <div class="section-head">
+        <span>Experiencias</span>
+        <h2 id="reviews-title">Reseñas recientes</h2>
+      </div>
+      @if (reviews().length) {
+        <div class="review-grid">
+          @for (review of reviews(); track review.fechaResenia + '-' + $index) {
+            <blockquote>
+              <div class="stars" [attr.aria-label]="review.puntuacion + ' de 5 estrellas'">
+                {{ '★★★★★'.slice(0, review.puntuacion) }}
+              </div>
+              <p>{{ review.comentario || 'El cliente no dejó un comentario.' }}</p>
+              <footer>{{ review.fechaResenia }}</footer>
+            </blockquote>
+          }
+        </div>
+      } @else {
+        <p class="empty">Todavía no hay reseñas para mostrar.</p>
+      }
+    </section>
+  }
+</main>

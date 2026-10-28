@@ -1,0 +1,14 @@
+<main class="error-page">
+  <section class="error-card" aria-labelledby="error-title">
+    <span class="status">{{ status() }}</span>
+    <div class="error-card__content">
+      <span class="eyebrow">AppointMee · Interrupción</span>
+      <h1 id="error-title">{{ title() }}</h1>
+      <p>{{ message() }}</p>
+      <div class="actions">
+        <a class="primary" routerLink="/">Volver al inicio</a>
+        <a class="secondary" routerLink="/login">Ir a mi cuenta</a>
+      </div>
+    </div>
+  </section>
+</main>

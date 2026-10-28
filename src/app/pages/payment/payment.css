@@ -1,0 +1,126 @@
+:host {
+  display: block;
+}
+.payment-page {
+  display: grid;
+  place-items: center;
+  width: min(100% - 32px, 1100px);
+  min-height: calc(100dvh - var(--nav-h));
+  margin: auto;
+  padding: 54px 0 90px;
+}
+.payment-card {
+  width: min(100%, 550px);
+  padding: clamp(26px, 5vw, 48px);
+  border: 1px solid var(--line);
+  border-radius: 26px;
+  background:
+    radial-gradient(circle at 50% 0, rgba(247, 198, 90, 0.1), transparent 42%),
+    rgba(255, 255, 255, 0.025);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.3);
+  text-align: center;
+}
+.shield {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 20px;
+  border: 1px solid rgba(247, 198, 90, 0.25);
+  border-radius: 18px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.shield svg {
+  width: 30px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.eyebrow {
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+h1 {
+  margin: 12px 0;
+  font-size: clamp(2rem, 5vw, 3rem);
+  letter-spacing: -0.05em;
+  line-height: 1.05;
+}
+.payment-card > p {
+  color: var(--muted);
+  line-height: 1.65;
+}
+.order {
+  display: flex;
+  justify-content: space-between;
+  margin: 26px 0 20px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: #0a0e13;
+}
+.order span {
+  color: var(--muted);
+}
+.order strong {
+  color: var(--accent);
+}
+ul {
+  display: grid;
+  gap: 10px;
+  margin: 0 0 26px;
+  padding: 0;
+  list-style: none;
+  color: #aeb8c5;
+  font-size: 12px;
+  text-align: left;
+}
+li span {
+  margin-right: 8px;
+  color: var(--accent);
+}
+.primary {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 14px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--accent);
+  color: #211704;
+  font-weight: 700;
+  cursor: pointer;
+}
+.primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.cancel {
+  display: inline-block;
+  margin-top: 18px;
+  color: #8994a4;
+  font-size: 12px;
+  text-decoration: none;
+}
+.cancel:hover {
+  color: var(--accent);
+}
+.message {
+  padding: 11px;
+  border-radius: 9px;
+  background: rgba(255, 100, 100, 0.08);
+  color: #ffaaaa !important;
+  font-size: 13px;
+}
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}

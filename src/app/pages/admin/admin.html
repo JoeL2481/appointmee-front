@@ -1,0 +1,246 @@
+<main class="admin-page">
+  <header class="hero">
+    <div>
+      <span class="eyebrow">Administración</span>
+      <h1>Control <em>general.</em></h1>
+      <p>Supervisá la comunidad y las sucursales publicadas en AppointMee.</p>
+    </div>
+    <div class="stats">
+      <div>
+        <strong>{{ users().length }}</strong
+        ><span>usuarios</span>
+      </div>
+      <div>
+        <strong>{{ branches().length }}</strong
+        ><span>sucursales</span>
+      </div>
+      <div>
+        <strong>{{ activeUsers() }}</strong
+        ><span>cuentas activas</span>
+      </div>
+    </div>
+  </header>
+
+  @if (error()) {
+    <div class="alert alert--error" role="alert">{{ error() }}</div>
+  }
+  @if (notice()) {
+    <div class="alert alert--success" role="status">{{ notice() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="loading"><i></i> Cargando información…</div>
+  } @else {
+    <section class="shell">
+      <div class="shell__bar">
+        <nav aria-label="Módulos administrativos">
+          <button
+            type="button"
+            [class.active]="section() === 'users'"
+            (click)="setSection('users')"
+          >
+            Usuarios <span>{{ users().length }}</span></button
+          ><button
+            type="button"
+            [class.active]="section() === 'branches'"
+            (click)="setSection('branches')"
+          >
+            Sucursales <span>{{ branches().length }}</span>
+          </button>
+        </nav>
+        <label class="search"
+          ><span aria-hidden="true">⌕</span
+          ><input
+            type="search"
+            [value]="query()"
+            (input)="searchChanged($event)"
+            [placeholder]="section() === 'users' ? 'Buscar por nombre…' : 'Buscar sucursal…'"
+            aria-label="Buscar"
+        /></label>
+      </div>
+
+      <div class="content">
+        <section class="list-panel">
+          @if (section() === 'users') {
+            <div class="list-heading">
+              <span>Usuario</span><span>Estado</span><span>Acciones</span>
+            </div>
+            <div class="items">
+              @for (user of filteredUsers(); track user.id) {
+                <article class="user-row" [class.selected]="userDetails()?.id === user.id">
+                  <button class="identity" type="button" (click)="showUser(user.id)">
+                    <span class="avatar"
+                      >{{ user.nombre.charAt(0) }}{{ user.apellido.charAt(0) }}</span
+                    ><span
+                      ><strong>{{ user.nombre }} {{ user.apellido }}</strong
+                      ><small>ID {{ user.id.toString().padStart(4, '0') }}</small></span
+                    >
+                  </button>
+                  <span class="state" [class.inactive]="!user.estado"
+                    ><i></i>{{ user.estado ? 'Activo' : 'Inactivo' }}</span
+                  >
+                  <div class="actions">
+                    <button type="button" (click)="showUser(user.id)">Detalle</button
+                    ><button
+                      class="delete"
+                      type="button"
+                      [disabled]="busy()"
+                      (click)="deleteUser(user)"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                </article>
+              } @empty {
+                <div class="empty">No hay usuarios que coincidan con la búsqueda.</div>
+              }
+            </div>
+          } @else {
+            <div class="list-heading branch-columns">
+              <span>Sucursal</span><span>Valoración</span><span>Acciones</span>
+            </div>
+            <div class="items">
+              @for (branch of filteredBranches(); track branch.id) {
+                <article class="user-row" [class.selected]="branchDetails()?.id === branch.id">
+                  <button class="identity" type="button" (click)="showBranch(branch.id)">
+                    <span class="avatar avatar--square">
+                      @if (branch.fotoPerfil) {
+                        <img [src]="branch.fotoPerfil" alt="" />
+                      } @else {
+                        {{ branch.nombre.charAt(0) }}
+                      }</span
+                    ><span
+                      ><strong>{{ branch.nombre }}</strong
+                      ><small>{{ formatCategory(branch.categoria) }}</small></span
+                    >
+                  </button>
+                  <span class="rating"
+                    >{{ branch.puntuacion.toFixed(1) }} <b>★</b
+                    ><small>{{ branch.cantidadPuntuaciones }} reseñas</small></span
+                  >
+                  <div class="actions">
+                    <button type="button" (click)="showBranch(branch.id)">Detalle</button
+                    ><button
+                      class="delete"
+                      type="button"
+                      [disabled]="busy()"
+                      (click)="deleteBranch(branch)"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                </article>
+              } @empty {
+                <div class="empty">No hay sucursales que coincidan con la búsqueda.</div>
+              }
+            </div>
+          }
+        </section>
+
+        <aside class="detail">
+          @if (detailLoading()) {
+            <div class="loading loading--detail"><i></i></div>
+          } @else if (userDetails(); as user) {
+            <div class="detail__hero">
+              <span class="avatar avatar--large">
+                @if (user.fotoPerfil) {
+                  <img [src]="user.fotoPerfil" alt="" />
+                } @else {
+                  {{ user.nombre.charAt(0) }}{{ user.apellido.charAt(0) }}
+                }
+              </span>
+              <div>
+                <span class="eyebrow">Perfil #{{ user.id }}</span>
+                <h2>{{ user.nombre }} {{ user.apellido }}</h2>
+                <p>{{ user.email }}</p>
+              </div>
+            </div>
+            <dl>
+              <div>
+                <dt>Alta</dt>
+                <dd>{{ formatDate(user.fechaCreacion) }}</dd>
+              </div>
+              <div>
+                <dt>Roles</dt>
+                <dd class="tags">
+                  @for (role of user.roles; track role) {
+                    <span>{{ role }}</span>
+                  }
+                </dd>
+              </div>
+              <div>
+                <dt>Sucursales como empleado</dt>
+                <dd>{{ user.sucursalesEmpleado.length }}</dd>
+              </div>
+            </dl>
+            @if (user.sucursalesEmpleado.length) {
+              <div class="associations">
+                <span class="label">Asociaciones</span>
+                @for (branch of user.sucursalesEmpleado; track branch.id) {
+                  <button type="button" (click)="setSection('branches'); showBranch(branch.id)">
+                    {{ branch.nombre }} <span>→</span>
+                  </button>
+                }
+              </div>
+            }
+            <button
+              class="destructive"
+              type="button"
+              [disabled]="busy()"
+              (click)="deleteUser(user)"
+            >
+              Eliminar cuenta
+            </button>
+          } @else if (branchDetails(); as branch) {
+            @if (branch.fotoPerfil) {
+              <img class="cover" [src]="branch.fotoPerfil" [alt]="branch.nombre" />
+            }
+            <span class="eyebrow">Sucursal #{{ branch.id }}</span>
+            <h2>{{ branch.nombre }}</h2>
+            <p class="description">{{ branch.descripcion }}</p>
+            <dl>
+              <div>
+                <dt>Categoría</dt>
+                <dd class="capitalize">{{ formatCategory(branch.categoria) }}</dd>
+              </div>
+              <div>
+                <dt>Dirección</dt>
+                <dd>{{ branch.direccion }}</dd>
+              </div>
+              <div>
+                <dt>Horario</dt>
+                <dd>{{ branch.horaApertura }}–{{ branch.horaCierre }}</dd>
+              </div>
+              <div>
+                <dt>Empleador</dt>
+                <dd>{{ branch.empleador.nombre }} {{ branch.empleador.apellido }}</dd>
+              </div>
+              <div>
+                <dt>Empleados</dt>
+                <dd>{{ branch.empleados.length }}</dd>
+              </div>
+              <div>
+                <dt>Creada</dt>
+                <dd>{{ formatDate(branch.fechaCreacion) }}</dd>
+              </div>
+            </dl>
+            <button
+              class="destructive"
+              type="button"
+              [disabled]="busy()"
+              (click)="deleteBranch(branch)"
+            >
+              Eliminar sucursal
+            </button>
+          } @else {
+            <div class="detail-empty">
+              <span>↗</span>
+              <h3>Elegí un registro</h3>
+              <p>Seleccioná una fila para consultar toda su información.</p>
+            </div>
+          }
+        </aside>
+      </div>
+    </section>
+  }
+</main>

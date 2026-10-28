@@ -1,0 +1,134 @@
+<main class="booking-page" aria-live="polite">
+  <a class="back" [routerLink]="['/sucursales', branchId()]">← Volver a la sucursal</a>
+  <header>
+    <span class="eyebrow">Reserva online</span>
+    <h1>Armá tu turno</h1>
+    <p>Elegí quién te atiende, el servicio y el horario que mejor te quede.</p>
+  </header>
+
+  <ol class="steps" aria-label="Progreso de la reserva">
+    <li [class.active]="step() >= 1"><span>1</span> Profesional</li>
+    <li [class.active]="step() >= 2"><span>2</span> Servicio</li>
+    <li [class.active]="step() >= 3"><span>3</span> Disponibilidad</li>
+  </ol>
+
+  @if (loading()) {
+    <div class="state">
+      <span class="loader"></span>
+      <p>Preparando tu reserva...</p>
+    </div>
+  } @else if (error() && !employees().length) {
+    <div class="state state--error">
+      <strong>No pudimos continuar</strong>
+      <p>{{ error() }}</p>
+    </div>
+  } @else {
+    <section class="panel">
+      @if (step() === 1) {
+        <div class="panel__head">
+          <span>Paso 1</span>
+          <h2>¿Quién querés que te atienda?</h2>
+        </div>
+        <div class="options">
+          @for (employee of employees(); track employee.id) {
+            <button class="option person" type="button" (click)="chooseEmployee(employee.id)">
+              @if (employee.urlFotoPerfil) {
+                <img [src]="employee.urlFotoPerfil" alt="" />
+              } @else {
+                <span class="avatar" aria-hidden="true"
+                  >{{ employee.nombre.charAt(0) }}{{ employee.apellido.charAt(0) }}</span
+                >
+              }
+              <span
+                ><strong>{{ employee.nombre }} {{ employee.apellido }}</strong
+                ><small
+                  ><span aria-hidden="true">★</span> {{ employee.puntuacion.toFixed(1) }} ·
+                  {{ employee.cantidadPuntuaciones }} reseñas</small
+                ></span
+              >
+              <span aria-hidden="true">→</span>
+            </button>
+          } @empty {
+            <p class="empty">No hay profesionales disponibles.</p>
+          }
+        </div>
+      } @else if (step() === 2) {
+        <div class="panel__head">
+          <span>Paso 2</span>
+          <h2>Seleccioná un servicio</h2>
+        </div>
+        <div class="options">
+          @for (service of services(); track service.id) {
+            <button class="option" type="button" (click)="chooseService(service.id)">
+              <span
+                ><strong>{{ service.nombre }}</strong
+                ><small
+                  >{{ service.duracion }} minutos · <span aria-hidden="true">★</span>
+                  {{ service.puntuacion.toFixed(1) }}</small
+                ></span
+              >
+              <span aria-hidden="true">→</span>
+            </button>
+          } @empty {
+            <p class="empty">No hay servicios disponibles.</p>
+          }
+        </div>
+        <button class="secondary" type="button" (click)="back()">Atrás</button>
+      } @else {
+        <div class="panel__head">
+          <span>Paso 3</span>
+          <h2>Elegí fecha y horario</h2>
+        </div>
+        @if (availabilityLoading()) {
+          <div class="state">
+            <span class="loader"></span>
+            <p>Consultando agenda...</p>
+          </div>
+        } @else if (availability().length === 0) {
+          <p class="empty">No hay horarios disponibles para esta combinación.</p>
+        } @else {
+          <div class="dates" role="group" aria-label="Fechas disponibles">
+            @for (day of availability(); track day.fecha) {
+              <button
+                type="button"
+                [class.selected]="selectedDate() === day.fecha"
+                (click)="chooseDate(day.fecha)"
+              >
+                <strong>{{ day.fecha }}</strong
+                ><small>{{ day.horarios.length }} horarios</small>
+              </button>
+            }
+          </div>
+          @if (selectedDay(); as day) {
+            <fieldset class="times">
+              <legend>Horarios disponibles</legend>
+              @for (time of day.horarios; track time) {
+                <button
+                  type="button"
+                  [class.selected]="selectedTime() === time"
+                  (click)="selectedTime.set(time)"
+                >
+                  {{ time.slice(0, 5) }}
+                </button>
+              }
+            </fieldset>
+          }
+        }
+        @if (error()) {
+          <p class="message message--error" role="alert">{{ error() }}</p>
+        }
+        <div class="actions">
+          <button class="secondary" type="button" (click)="back()">Atrás</button
+          ><button
+            class="primary"
+            type="button"
+            [disabled]="!canSubmit() || submitting()"
+            (click)="submit()"
+          >
+            {{ submitting() ? 'Confirmando...' : 'Confirmar y pagar' }}
+          </button>
+        </div>
+      }
+    </section>
+  }
+</main>

@@ -1,0 +1,31 @@
+<main class="credits-page">
+  <section class="credits" aria-labelledby="credits-title">
+    <header>
+      <span class="eyebrow">Hecho con intención</span>
+      <h1 id="credits-title">Créditos</h1>
+      <p>
+        Herramientas y recursos que ayudan a construir una experiencia simple para organizar el
+        tiempo.
+      </p>
+    </header>
+
+    <div class="resource-list">
+      @for (resource of resources; track resource.href) {
+        <a class="resource" [href]="resource.href" target="_blank" rel="noopener noreferrer">
+          <span class="resource__index">{{ $index + 1 }}</span>
+          <span class="resource__copy">
+            <strong>{{ resource.label }}</strong>
+            <span>{{ resource.description }}</span>
+          </span>
+          <span class="resource__arrow" aria-hidden="true">↗</span>
+          <span class="sr-only">(se abre en una pestaña nueva)</span>
+        </a>
+      }
+    </div>
+
+    <footer>
+      <span>AppointMee · Gestión de turnos</span>
+      <a routerLink="/">Volver al inicio</a>
+    </footer>
+  </section>
+</main>

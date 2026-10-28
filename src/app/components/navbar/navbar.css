@@ -570,6 +570,32 @@
     box-shadow 0.3s;
 }
 
+img.profile__avatar,
+img.menu__avatar {
+  object-fit: cover;
+}
+
+.login-link {
+  padding: 9px 16px;
+  border: 1px solid rgba(247, 198, 90, 0.3);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background 0.2s,
+    border-color 0.2s,
+    transform 0.25s var(--ease);
+}
+
+.login-link:hover {
+  border-color: var(--accent);
+  background: rgba(247, 198, 90, 0.18);
+  transform: translateY(-2px);
+}
+
 .profile__copy {
   display: flex;
   flex-direction: column;
@@ -992,6 +1018,20 @@
     transform 0.25s var(--ease);
 }
 
+.sheet__login {
+  display: block;
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid rgba(247, 198, 90, 0.25);
+  border-radius: 12px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+}
+
 .sheet__logout svg {
   transition: transform 0.25s var(--ease);
 }
@@ -1061,6 +1101,12 @@
 .sheet__link:focus-visible,
 .search__clear:focus-visible,
 .sheet__logout:focus-visible {
+  outline: 2px solid rgba(247, 198, 90, 0.72);
+  outline-offset: 2px;
+}
+
+.login-link:focus-visible,
+.sheet__login:focus-visible {
   outline: 2px solid rgba(247, 198, 90, 0.72);
   outline-offset: 2px;
 }

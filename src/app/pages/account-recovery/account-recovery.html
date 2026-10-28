@@ -1,0 +1,63 @@
+<main class="recovery-page">
+  <section class="recovery-card" aria-labelledby="recovery-title">
+    <a class="back" routerLink="/login">← Volver al inicio de sesión</a>
+    <span class="icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24">
+        <path d="M4 12a8 8 0 1 0 3-6.25M4 4v5h5" />
+        <path d="M12 8v4l2.5 1.5" />
+      </svg>
+    </span>
+    <span class="eyebrow">Reactivación de cuenta</span>
+    <h1 id="recovery-title">Recuperá tu acceso</h1>
+    <p class="lead">Esta opción reactiva una cuenta que desactivaste anteriormente.</p>
+
+    <div class="clarification">
+      <strong>No es un cambio de contraseña.</strong>
+      <span>Ingresá el correo y la contraseña actual de la cuenta desactivada.</span>
+    </div>
+
+    @if (successMessage()) {
+      <div class="notice notice--success" role="status">
+        {{ successMessage() }} <a routerLink="/login">Iniciar sesión</a>
+      </div>
+    }
+    @if (errorMessage()) {
+      <p class="notice notice--error" role="alert">{{ errorMessage() }}</p>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <label class="field">
+        <span>Correo electrónico</span>
+        <input
+          type="email"
+          formControlName="email"
+          autocomplete="email"
+          placeholder="vos@ejemplo.com"
+        />
+        @if (backendError('email')) {
+          <small>{{ backendError('email') }}</small>
+        } @else if (form.controls.email.touched && form.controls.email.invalid) {
+          <small>Ingresá un correo electrónico válido.</small>
+        }
+      </label>
+
+      <label class="field">
+        <span>Contraseña actual</span>
+        <input type="password" formControlName="pass" autocomplete="current-password" />
+        @if (backendError('pass')) {
+          <small>{{ backendError('pass') }}</small>
+        } @else if (form.controls.pass.touched && form.controls.pass.hasError('required')) {
+          <small>Ingresá la contraseña actual de la cuenta.</small>
+        }
+      </label>
+
+      <button class="submit" type="submit" [disabled]="submitting()">
+        @if (submitting()) {
+          Reactivando…
+        } @else {
+          Reactivar cuenta
+        }
+      </button>
+    </form>
+  </section>
+</main>

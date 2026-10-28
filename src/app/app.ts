@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import { Navbar } from './navbar/navbar';
+import { Component, signal } from '@angular/core';
+import { ActivatedRoute, RouterOutlet } from '@angular/router';
+import { Navbar } from './components/navbar/navbar';
 
 @Component({
   imports: [RouterOutlet, Navbar],
@@ -8,4 +8,10 @@ import { Navbar } from './navbar/navbar';
   styleUrl: './app.css',
   templateUrl: './app.html',
 })
-export class App {}
+export class App {
+  protected readonly showNavbar = signal(true);
+
+  protected updateLayout(route: ActivatedRoute): void {
+    this.showNavbar.set(route.snapshot.data['hideNavbar'] !== true);
+  }
+}

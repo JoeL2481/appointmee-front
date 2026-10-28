@@ -1,5 +1,7 @@
-<app-navbar />
+@if (showNavbar()) {
+  <app-navbar />
+}
 
-<main class="app-main">
-  <router-outlet />
+<main class="app-main" [class.app-main--without-navbar]="!showNavbar()">
+  <router-outlet (activate)="updateLayout(outlet.activatedRoute)" #outlet="outlet" />
 </main>

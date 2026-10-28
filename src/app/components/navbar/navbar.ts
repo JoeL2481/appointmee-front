@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  computed,
   DestroyRef,
   ElementRef,
   HostListener,
@@ -11,12 +12,15 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter } from 'rxjs';
+import { Role } from '../../models/user';
+import { AuthService } from '../../services/auth.service';
 
 interface NavItem {
   readonly label: string;
   readonly path: string;
   readonly icon: string;
   readonly exact: boolean;
+  readonly roles?: readonly Role[];
 }
 
 const ICONS = {
@@ -43,6 +47,7 @@ const ICONS = {
 })
 export class Navbar {
   private readonly router = inject(Router);
+  protected readonly auth = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
   private readonly bee = viewChild<ElementRef<HTMLElement>>('bee');
@@ -63,17 +68,58 @@ export class Navbar {
   protected readonly searchTerm = signal('');
   protected readonly icons = ICONS;
 
-  protected readonly primaryLinks: readonly NavItem[] = [
+  private readonly allPrimaryLinks: readonly NavItem[] = [
     { label: 'Home', path: '/', icon: ICONS.home, exact: true },
-    { label: 'Mis Turnos', path: '/mis-turnos', icon: ICONS.calendar, exact: false },
-    { label: 'Mis Sucursales', path: '/mis-sucursales', icon: ICONS.store, exact: false },
+    {
+      label: 'Mis Turnos',
+      path: '/mis-turnos',
+      icon: ICONS.calendar,
+      exact: false,
+      roles: ['CLIENTE', 'EMPLEADO', 'EMPLEADOR'],
+    },
+    {
+      label: 'Mis Sucursales',
+      path: '/mis-sucursales',
+      icon: ICONS.store,
+      exact: false,
+      roles: ['EMPLEADO', 'EMPLEADOR'],
+    },
+    {
+      label: 'Panel Empleador',
+      path: '/empleador',
+      icon: ICONS.store,
+      exact: false,
+      roles: ['EMPLEADOR'],
+    },
+    {
+      label: 'Panel Empleado',
+      path: '/empleado',
+      icon: ICONS.calendar,
+      exact: false,
+      roles: ['EMPLEADO'],
+    },
+    {
+      label: 'Administración',
+      path: '/admin',
+      icon: ICONS.settings,
+      exact: false,
+      roles: ['ADMINISTRADOR'],
+    },
   ];
 
-  protected readonly accountLinks: readonly NavItem[] = [
+  private readonly allAccountLinks: readonly NavItem[] = [
     { label: 'Mi Perfil', path: '/perfil', icon: ICONS.user, exact: false },
     { label: 'Solicitudes', path: '/solicitudes', icon: ICONS.inbox, exact: false },
     { label: 'Ajustes', path: '/configuracion', icon: ICONS.settings, exact: false },
   ];
+
+  protected readonly primaryLinks = computed(() => this.visibleLinks(this.allPrimaryLinks));
+  protected readonly accountLinks = computed(() => this.visibleLinks(this.allAccountLinks));
+  protected readonly roleLabel = computed(() => {
+    const roles = this.auth.user()?.roles ?? [];
+    return roles.map((role) => this.formatRole(role)).join(' · ');
+  });
+  protected readonly avatarFallback = computed(() => this.auth.user()?.roles[0]?.charAt(0) ?? 'A');
 
   constructor() {
     this.router.events
@@ -283,9 +329,19 @@ export class Navbar {
   }
 
   protected logout(): void {
-    localStorage.removeItem('token');
+    this.auth.logout();
     this.closeAll();
     void this.router.navigate(['/login']);
+  }
+
+  private visibleLinks(links: readonly NavItem[]): readonly NavItem[] {
+    return links.filter(
+      (link) => !link.roles || link.roles.some((role) => this.auth.hasRole(role)),
+    );
+  }
+
+  private formatRole(role: Role): string {
+    return role.charAt(0) + role.slice(1).toLowerCase();
   }
 
   protected closeAll(): void {

@@ -1,47 +1,115 @@
-<section class="home">
-  <div class="home__content">
-    <span class="home__badge">
-      <span class="home__dot"></span>
-      Agenda simple, días más livianos
-    </span>
+<main class="catalog">
+  <header class="hero">
+    <div>
+      <span class="eyebrow">Tu próximo turno empieza acá</span>
+      <h1>Encontrá el lugar <em>ideal para vos.</em></h1>
+      <p>Explorá profesionales y servicios, compará experiencias y reservá en pocos pasos.</p>
+    </div>
+    <form class="search" role="search" (submit)="$event.preventDefault()">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="m21 21-4.4-4.4M19 11a8 8 0 1 1-16 0 8 8 0 0 1 16 0Z" />
+      </svg>
+      <label class="sr-only" for="branch-search">Buscar sucursal</label>
+      <input
+        id="branch-search"
+        type="search"
+        autocomplete="off"
+        placeholder="Nombre de la sucursal..."
+        [formControl]="search"
+      />
+    </form>
+  </header>
 
-    <h1>Tu tiempo,<br /><em>mejor organizado.</em></h1>
+  <section class="filters" aria-labelledby="categories-title">
+    <div class="section-head">
+      <div>
+        <span class="kicker">Explorar</span>
+        <h2 id="categories-title">Categorías</h2>
+      </div>
+      @if (selectedCategory() || search.value) {
+        <button class="text-button" type="button" (click)="clearFilters()">Limpiar filtros</button>
+      }
+    </div>
+    <div class="chips" role="list" aria-label="Filtrar por categoría">
+      <button
+        type="button"
+        class="chip"
+        [class.chip--active]="selectedCategory() === null"
+        (click)="selectCategory(null)"
+      >
+        Todas
+      </button>
+      @for (category of categories(); track category) {
+        <button
+          type="button"
+          class="chip"
+          [class.chip--active]="selectedCategory() === category"
+          (click)="selectCategory(category)"
+        >
+          {{ categoryLabel(category) }}
+        </button>
+      }
+    </div>
+  </section>
 
-    <p>
-      Gestioná turnos, sucursales y tu perfil desde un solo lugar. Todo lo que necesitás para
-      organizar tu día, sin vueltas.
-    </p>
-
-    <div class="home__actions">
-      <a class="btn btn--primary" routerLink="/mis-turnos">
-        Ver mis turnos
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M5 12h14M13 6l6 6-6 6" />
-        </svg>
-      </a>
-      <a class="btn btn--ghost" routerLink="/mis-sucursales">Explorar sucursales</a>
+  <section class="results" aria-labelledby="results-title" aria-live="polite">
+    <div class="section-head">
+      <div>
+        <span class="kicker">Catálogo</span>
+        <h2 id="results-title">Sucursales disponibles</h2>
+      </div>
+      @if (!loading()) {
+        <span class="count">{{ branches().length }} resultados</span>
+      }
     </div>
 
-    <div class="home__notes">
-      <span class="home__note">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="m5 12 4 4L19 6" />
-        </svg>
-        Reservas en segundos
-      </span>
-      <span class="home__note">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 8v4l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-        </svg>
-        Recordatorios claros
-      </span>
-      <span class="home__note">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M12 21s7-4.4 7-10a7 7 0 1 0-14 0c0 5.6 7 10 7 10Z" />
-          <path d="M12 13a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
-        </svg>
-        Sucursales cerca
-      </span>
-    </div>
-  </div>
-</section>
+    @if (loading()) {
+      <div class="state">
+        <span class="loader"></span>
+        <p>Buscando las mejores opciones...</p>
+      </div>
+    } @else if (error()) {
+      <div class="state state--error">
+        <strong>Algo salió mal</strong>
+        <p>{{ error() }}</p>
+      </div>
+    } @else if (branches().length === 0) {
+      <div class="state">
+        <strong>No encontramos coincidencias</strong>
+        <p>Probá con otro nombre o categoría.</p>
+      </div>
+    } @else {
+      <div class="branch-grid">
+        @for (branch of branches(); track branch.id) {
+          <article class="branch-card">
+            <a
+              class="branch-card__media"
+              [routerLink]="['/sucursales', branch.id]"
+              tabindex="-1"
+              aria-hidden="true"
+            >
+              @if (branch.fotoPerfil) {
+                <img [src]="branch.fotoPerfil" alt="" (error)="imageError($event)" />
+              }
+              <span class="branch-card__category">{{ categoryLabel(branch.categoria) }}</span>
+            </a>
+            <div class="branch-card__body">
+              <div>
+                <h3>
+                  <a [routerLink]="['/sucursales', branch.id]">{{ branch.nombre }}</a>
+                </h3>
+                <span class="rating" [attr.aria-label]="branch.puntuacion + ' de 5 estrellas'">
+                  <span aria-hidden="true">★</span> {{ branch.puntuacion.toFixed(1) }}
+                  <small>({{ branch.cantidadPuntuaciones }})</small>
+                </span>
+              </div>
+              <a class="card-link" [routerLink]="['/sucursales', branch.id]"
+                >Ver sucursal <span aria-hidden="true">→</span></a
+              >
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </section>
+</main>

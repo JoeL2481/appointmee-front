@@ -1,0 +1,148 @@
+<main class="employee-page">
+  <header class="hero">
+    <div>
+      <span class="eyebrow">Espacio de trabajo</span>
+      <h1>Agenda del <em>día.</em></h1>
+      <p>Consultá tus sucursales y resolvé los próximos turnos sin perder el ritmo.</p>
+    </div>
+    <div class="counter">
+      <strong>{{ appointments().length }}</strong
+      ><span>turnos pendientes</span>
+    </div>
+  </header>
+
+  @if (error()) {
+    <div class="alert alert--error" role="alert">{{ error() }}</div>
+  }
+  @if (notice()) {
+    <div class="alert alert--success" role="status">{{ notice() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="loading"><i></i> Preparando tu agenda…</div>
+  } @else if (!branches().length) {
+    <section class="empty-state">
+      <span>00</span>
+      <h2>No tenés sucursales asociadas</h2>
+      <p>Cuando aceptes una invitación de un empleador, tu agenda aparecerá en este espacio.</p>
+    </section>
+  } @else {
+    <section class="workspace">
+      <aside class="branches">
+        <div class="section-title">
+          <span>Sedes</span>
+          <h2>Mis sucursales</h2>
+        </div>
+        <label class="mobile-select"
+          ><span>Sucursal</span
+          ><select [value]="selectedBranchId() ?? ''" (change)="branchChanged($event)">
+            @for (branch of branches(); track branch.id) {
+              <option [value]="branch.id">{{ branch.nombre }}</option>
+            }
+          </select></label
+        >
+        <div class="branch-list">
+          @for (branch of branches(); track branch.id) {
+            <button
+              type="button"
+              [class.active]="selectedBranchId() === branch.id"
+              (click)="selectBranch(branch.id)"
+            >
+              <span class="branch-image">
+                @if (branch.fotoPerfil) {
+                  <img [src]="branch.fotoPerfil" [alt]="branch.nombre" />
+                } @else {
+                  {{ branch.nombre.charAt(0) }}
+                }
+              </span>
+              <span
+                ><strong>{{ branch.nombre }}</strong
+                ><small>{{ formatCategory(branch.categoria) }}</small></span
+              >
+              <b>→</b>
+            </button>
+          }
+        </div>
+      </aside>
+
+      <section class="agenda">
+        <div class="agenda__heading">
+          <div>
+            <span class="eyebrow">Próximos</span>
+            <h2>{{ selectedBranch()?.nombre }}</h2>
+          </div>
+          <span class="live"><i></i> Pendientes</span>
+        </div>
+        @if (agendaLoading()) {
+          <div class="loading"><i></i> Actualizando…</div>
+        } @else {
+          <div class="appointments">
+            @for (appointment of appointments(); track appointment.id) {
+              <article class="appointment">
+                <div class="date">
+                  <span>{{ formatDate(appointment.fechaTurno).split(',')[0] }}</span
+                  ><strong>{{
+                    formatDate(appointment.fechaTurno).split(',').slice(1).join(',')
+                  }}</strong>
+                </div>
+                <div class="appointment__service">
+                  <small>Servicio</small>
+                  <h3>{{ appointment.nombreServicio }}</h3>
+                </div>
+                <div class="appointment__actions">
+                  <button class="details" type="button" (click)="showDetails(appointment.id)">
+                    Ver detalle</button
+                  ><button
+                    class="complete"
+                    type="button"
+                    [disabled]="busyId() === appointment.id"
+                    (click)="complete(appointment)"
+                  >
+                    {{ busyId() === appointment.id ? 'Procesando…' : 'Finalizar' }}
+                  </button>
+                </div>
+              </article>
+            } @empty {
+              <div class="empty-agenda">
+                <span>✓</span>
+                <h3>Agenda al día</h3>
+                <p>No quedan turnos pendientes en esta sucursal.</p>
+              </div>
+            }
+          </div>
+        }
+      </section>
+    </section>
+
+    @if (appointmentDetails(); as details) {
+      <section class="detail-panel">
+        <div>
+          <span class="eyebrow">Turno #{{ details.id }}</span>
+          <h2>{{ details.servicio.nombre }}</h2>
+          <p>{{ formatDate(details.fechaTurno) }}</p>
+        </div>
+        <dl>
+          <div>
+            <dt>Cliente</dt>
+            <dd>{{ details.cliente.nombre }} {{ details.cliente.apellido }}</dd>
+          </div>
+          <div>
+            <dt>Duración</dt>
+            <dd>{{ details.servicio.duracion }} min</dd>
+          </div>
+          <div>
+            <dt>Precio</dt>
+            <dd>${{ details.servicio.precio }}</dd>
+          </div>
+          <div>
+            <dt>Estado</dt>
+            <dd>{{ details.estadoTurno }}</dd>
+          </div>
+        </dl>
+        <button type="button" aria-label="Cerrar detalle" (click)="appointmentDetails.set(null)">
+          ×
+        </button>
+      </section>
+    }
+  }
+</main>

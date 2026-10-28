@@ -7,3 +7,7 @@
   min-height: 100dvh;
   padding-top: var(--nav-h);
 }
+
+.app-main--without-navbar {
+  padding-top: 0;
+}

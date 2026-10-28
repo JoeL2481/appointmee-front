@@ -1,0 +1,36 @@
+<main class="payment-page" aria-live="polite">
+  <section class="payment-card">
+    <div class="shield" aria-hidden="true">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 3 4.5 6v5.5c0 4.7 3.1 8.1 7.5 9.5 4.4-1.4 7.5-4.8 7.5-9.5V6L12 3Z" />
+        <path d="m8.5 12 2.2 2.2 4.8-5" />
+      </svg>
+    </div>
+    <span class="eyebrow">Pago protegido</span>
+    <h1>Terminá de confirmar tu turno</h1>
+    <p>Vas a continuar en Mercado Pago para completar la operación de forma segura.</p>
+    <div class="order">
+      <span>Reserva</span><strong>#{{ appointmentId() || '—' }}</strong>
+    </div>
+    <ul>
+      <li><span aria-hidden="true">✓</span> Tus datos viajan cifrados</li>
+      <li><span aria-hidden="true">✓</span> AppointMee no almacena datos de tarjeta</li>
+      <li><span aria-hidden="true">✓</span> Confirmación automática del pago</li>
+    </ul>
+    @if (error()) {
+      <p class="message" role="alert">{{ error() }}</p>
+    }
+    <button
+      class="primary"
+      type="button"
+      [disabled]="!appointmentId() || loading()"
+      (click)="pay()"
+    >
+      {{ loading() ? 'Conectando...' : 'Continuar a Mercado Pago' }}
+      <span aria-hidden="true">→</span>
+    </button>
+    <a class="cancel" [routerLink]="['/mis-turnos', appointmentId()]"
+      >Volver al detalle del turno</a
+    >
+  </section>
+</main>

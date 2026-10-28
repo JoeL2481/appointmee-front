@@ -1,0 +1,75 @@
+<main class="request-page">
+  <section class="intro">
+    <span class="eyebrow">Crecer en AppointMee</span>
+    <h1>Convertite en <em>empleador.</em></h1>
+    <p>Contanos por qué querés administrar sucursales. El equipo revisará tu solicitud.</p>
+    <ol>
+      <li>
+        <span>01</span>
+        <div>
+          <strong>Enviá tu motivo</strong>
+          <p>Explicá brevemente tu proyecto.</p>
+        </div>
+      </li>
+      <li>
+        <span>02</span>
+        <div>
+          <strong>Revisión</strong>
+          <p>Un administrador evalúa la solicitud.</p>
+        </div>
+      </li>
+      <li>
+        <span>03</span>
+        <div>
+          <strong>Empezá a gestionar</strong>
+          <p>Al aprobarse, se habilitan tus herramientas.</p>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <section class="form-card">
+    @if (sent()) {
+      <div class="success" role="status">
+        <span>✓</span>
+        <h2>Solicitud enviada</h2>
+        <p>La recibimos correctamente. Podés seguir su estado desde Solicitudes.</p>
+        <a routerLink="/solicitudes">Ver mis solicitudes</a>
+      </div>
+    } @else {
+      <div class="form-head">
+        <span>Nueva solicitud</span>
+        <h2>Tu motivación</h2>
+        <p>Usá entre 20 y 300 caracteres.</p>
+      </div>
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <label for="motivo">Motivo</label>
+        <textarea
+          id="motivo"
+          formControlName="motivo"
+          rows="8"
+          maxlength="300"
+          placeholder="Quiero administrar mi negocio porque..."
+        ></textarea>
+        <div class="field-meta">
+          <span>
+            @if (form.controls.motivo.touched && form.controls.motivo.hasError('required')) {
+              El motivo es obligatorio.
+            } @else if (
+              form.controls.motivo.touched && form.controls.motivo.hasError('minlength')
+            ) {
+              Escribí al menos 20 caracteres.
+            }
+          </span>
+          <span [class.limit]="remaining() < 20">{{ remaining() }} disponibles</span>
+        </div>
+        @if (error()) {
+          <p class="error" role="alert">{{ error() }}</p>
+        }
+        <button type="submit" [disabled]="sending()">
+          {{ sending() ? 'Enviando...' : 'Enviar solicitud' }}<span aria-hidden="true">→</span>
+        </button>
+      </form>
+    }
+  </section>
+</main>
