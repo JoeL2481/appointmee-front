@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  HostListener,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 @Component({
@@ -8,4 +15,63 @@ import { RouterLink } from '@angular/router';
   styleUrl: './home.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Home {}
+export class Home {
+  private readonly mobileOpen = signal(false);
+  private readonly scrolled = signal(false);
+  private readonly currentYear = signal(new Date().getFullYear());
+
+  protected readonly isAuthenticated = computed(() => {
+    try {
+      if (typeof localStorage === 'undefined') {
+        return false;
+      }
+      const token = localStorage.getItem('token');
+      return !!token && token.trim().length > 0;
+    } catch {
+      return false;
+    }
+  });
+
+  @HostListener('window:scroll')
+  protected onScroll(): void {
+    this.scrolled.set(window.scrollY > 12);
+  }
+
+  @HostListener('window:resize')
+  protected onResize(): void {
+    if (window.innerWidth > 1024 && this.mobileOpen()) {
+      this.closeMobile();
+    }
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  protected onKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Escape') {
+      this.closeMobile();
+    }
+  }
+
+  protected toggleMobile(): void {
+    this.mobileOpen.update((open) => !open);
+    if (this.mobileOpen()) {
+      document.body.classList.add('nav-locked');
+    } else {
+      document.body.classList.remove('nav-locked');
+    }
+  }
+
+  protected closeMobile(): void {
+    this.mobileOpen.set(false);
+    document.body.classList.remove('nav-locked');
+  }
+
+  protected scrollToSection(event: Event, sectionId: string): void {
+    event.preventDefault();
+    const element = document.getElementById(sectionId);
+    if (element) {
+      const navHeight = 86;
+      const top = element.getBoundingClientRect().top + window.scrollY - navHeight;
+      window.scrollTo({ top, behavior: 'smooth' });
+    }
+  }
+}
