@@ -70,52 +70,6 @@
   margin: 0 auto;
 }
 
-.pointer-bee,
-.pointer-bee__trail {
-  position: fixed;
-  top: 0;
-  left: 0;
-  z-index: 1100;
-  pointer-events: none;
-  opacity: 0;
-  will-change: transform;
-  transition: opacity 0.25s var(--ease);
-}
-
-.pointer-bee__trail {
-  width: 86px;
-  height: 86px;
-  background: radial-gradient(
-    circle,
-    rgba(247, 198, 90, 0.3),
-    rgba(247, 198, 90, 0.09) 42%,
-    transparent 70%
-  );
-}
-
-.pointer-bee {
-  width: 32px;
-  height: 32px;
-}
-
-.pointer-bee.is-active,
-.pointer-bee__trail.is-active {
-  opacity: 1;
-}
-
-.pointer-bee__trail.is-active {
-  animation: trail-pulse 1.8s ease-in-out infinite;
-}
-
-.pointer-bee img {
-  display: block;
-  width: 32px;
-  height: 32px;
-  filter: drop-shadow(0 0 6px rgba(247, 198, 90, 0.5)) drop-shadow(0 0 14px rgba(247, 198, 90, 0.2));
-  transform-origin: 50% 50%;
-  animation: bee-flit 2.4s ease-in-out infinite;
-}
-
 .brand {
   display: flex;
   align-items: center;
@@ -202,25 +156,6 @@
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.025);
   overflow: hidden;
-}
-
-.nav__list::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: radial-gradient(
-    130px circle at var(--mx, 50%) var(--my, 50%),
-    rgba(247, 198, 90, 0.18),
-    transparent 68%
-  );
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.25s;
-}
-
-.nav__list.is-tracking::before {
-  opacity: 1;
 }
 
 .nav__item {
@@ -1082,28 +1017,6 @@
   }
 }
 
-@keyframes bee-flit {
-  0%,
-  100% {
-    transform: translateY(0) rotate(-4deg);
-  }
-
-  50% {
-    transform: translateY(-3px) rotate(5deg);
-  }
-}
-
-@keyframes trail-pulse {
-  0%,
-  100% {
-    opacity: 0.5;
-  }
-
-  50% {
-    opacity: 0.95;
-  }
-}
-
 @keyframes link-shine {
   from {
     background-position: 200% 0;
@@ -1288,23 +1201,138 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pointer-bee,
-  .pointer-bee__trail {
-    display: none;
-  }
+}
 
-  .navbar::after,
-  .navbar *,
-  .sheet * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+/* ── Estados de sesión del navbar: CTAs visitante, placeholder de restauración
+   y avatar con imagen ───────────────────────────────────────────────────────── */
+
+.navbar__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 18px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--text);
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    border-color 0.2s,
+    background 0.2s,
+    color 0.2s;
+}
+
+.navbar__cta:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--accent-strong);
+}
+
+.navbar__cta--solid {
+  background: var(--accent-strong);
+  border-color: transparent;
+  color: #17130a;
+}
+
+.navbar__cta--solid:hover {
+  background: #ffe6a3;
+  color: #17130a;
+}
+
+.profile--placeholder {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  cursor: default;
+  pointer-events: none;
+}
+
+.skeleton {
+  display: block;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05),
+    rgba(255, 255, 255, 0.14),
+    rgba(255, 255, 255, 0.05)
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shine 1.4s linear infinite;
+}
+
+@keyframes skeleton-shine {
+  to {
+    background-position: -200% 0;
   }
 }
 
-@media (pointer: coarse) {
-  .pointer-bee,
-  .pointer-bee__trail {
+.skeleton--avatar {
+  width: 34px;
+  height: 34px;
+}
+
+.skeleton--line {
+  width: 92px;
+  height: 9px;
+  margin: 3px 0;
+}
+
+.skeleton--line-short {
+  width: 58px;
+}
+
+.profile__avatar img,
+.menu__avatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+}
+
+.burger:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.burger:disabled:hover {
+  border-color: var(--line);
+  background: rgba(255, 255, 255, 0.035);
+  transform: none;
+  box-shadow: none;
+}
+
+.sheet__loading {
+  margin: 8px 4px 4px;
+  color: #6f7a8c;
+  font-family: var(--mono);
+  font-size: 11.5px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--accent-strong);
+  outline-offset: 2px;
+}
+
+@media (max-width: 1024px) {
+  /* En mobile el navbar se prioriza: logo + búsqueda + menú hamburguesa.
+     Las CTAs de cuenta viven dentro del menú. */
+  .navbar__cta {
     display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
   }
 }
