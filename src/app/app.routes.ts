@@ -54,23 +54,9 @@ export const routes: Routes = [
   {
     path: 'login',
     title: 'AppointMee | Iniciar sesión',
-    loadComponent: () => import('./pages/login/login').then((module) => module.LoginPage),
-  },
-  {
-    path: 'registrarme',
-    title: 'AppointMee | Crear cuenta',
     data: {
-      title: 'Crear cuenta',
-      description: 'Creá tu cuenta de AppointMee para reservar y gestionar turnos.',
-    },
-    loadComponent: () => import('./pages/section/section').then((module) => module.Section),
-  },
-  {
-    path: 'admin',
-    title: 'AppointMee | Administración',
-    data: {
-      title: 'Administración',
-      description: 'Panel interno disponible para usuarios con rol Administrador.',
+      title: 'Iniciar sesión',
+      description: 'Ingresá a tu cuenta para volver a gestionar tus turnos.',
     },
     loadComponent: () => import('./pages/section/section').then((module) => module.Section),
   },
