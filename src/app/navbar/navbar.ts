@@ -4,6 +4,7 @@ import {
   DestroyRef,
   ElementRef,
   HostListener,
+  computed,
   inject,
   signal,
   viewChild,
@@ -11,12 +12,15 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { filter } from 'rxjs';
+import { Auth } from '../auth/auth';
 
 interface NavItem {
   readonly label: string;
   readonly path: string;
   readonly icon: string;
   readonly exact: boolean;
+  /** Si se define, el acceso solo aparece con alguno de estos roles (criterio 4 de US-HOME-06). */
+  readonly roles?: readonly string[];
 }
 
 const ICONS = {
@@ -27,7 +31,9 @@ const ICONS = {
   user: 'M20 21a8 8 0 0 0-16 0M12 13a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z',
   inbox: 'M4 4h16v16H4zM4 13h4l2 3h4l2-3h4',
   settings:
-    'M4 7h6M14 7h6M4 12h10M18 12h2M4 17h2M10 17h10M10 7a2 2 0 1 0 4 0 2 2 0 0 0-4 0ZM6 12a2 2 0 1 0 4 0 2 2 0 0 0-4 0ZM14 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0Z',
+    'M4 7h6M14 7h6M4 12h10M18 12h2M4 17h2M10 17h2M10 7a2 2 0 1 0 4 0 2 2 0 0 0-4 0ZM6 12a2 2 0 1 0 4 0 2 2 0 0 0-4 0ZM14 17a2 2 0 1 0 4 0 2 2 0 0 0-4 0Z',
+  shield: 'M12 3 19 6v5c0 4.4-3 8.2-7 9-4-.8-7-4.6-7-9V6l7-3Z',
+  plus: 'M12 5v14M5 12h14',
   logout: 'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9',
   search: 'M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16ZM21 21l-4.3-4.3',
   chevron: 'm9 18 6-6-6-6',
@@ -44,17 +50,11 @@ const ICONS = {
 export class Navbar {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
+  protected readonly auth = inject(Auth);
+
   private readonly searchInput = viewChild<ElementRef<HTMLInputElement>>('searchInput');
-  private readonly bee = viewChild<ElementRef<HTMLElement>>('bee');
-  private readonly beeTrail = viewChild<ElementRef<HTMLElement>>('beeTrail');
-  private readonly beeMedia =
-    typeof window.matchMedia === 'function'
-      ? window.matchMedia('(pointer: fine) and (prefers-reduced-motion: no-preference)')
-      : null;
-  private beeFrame = 0;
-  private readonly beeTarget = { x: 0, y: 0 };
-  private readonly beePosition = { x: 0, y: 0 };
-  private readonly trailPosition = { x: 0, y: 0 };
+  private readonly burger = viewChild<ElementRef<HTMLButtonElement>>('burger');
+  private readonly sheet = viewChild<ElementRef<HTMLElement>>('sheet');
 
   protected readonly mobileOpen = signal(false);
   protected readonly profileOpen = signal(false);
@@ -63,17 +63,31 @@ export class Navbar {
   protected readonly searchTerm = signal('');
   protected readonly icons = ICONS;
 
-  protected readonly primaryLinks: readonly NavItem[] = [
+  /** Siempre visibles para cualquier usuario autenticado (criterio 2). */
+  protected readonly linksBase: readonly NavItem[] = [
     { label: 'Home', path: '/', icon: ICONS.home, exact: true },
     { label: 'Mis Turnos', path: '/mis-turnos', icon: ICONS.calendar, exact: false },
-    { label: 'Mis Sucursales', path: '/mis-sucursales', icon: ICONS.store, exact: false },
   ];
 
-  protected readonly accountLinks: readonly NavItem[] = [
+  /** Disponibles solo con el rol correspondiente (criterio 3, 4). */
+  protected readonly linksPorRol: readonly NavItem[] = [
+    { label: 'Mis Sucursales', path: '/mis-sucursales', icon: ICONS.store, exact: false, roles: ['EMPLEADOR'] },
+    { label: 'Administración', path: '/admin', icon: ICONS.shield, exact: false, roles: ['ADMINISTRADOR'] },
+  ];
+
+  /** Accesos del menú de perfil, disponibles para cualquier usuario autenticado. */
+  protected readonly linksCuenta: readonly NavItem[] = [
     { label: 'Mi Perfil', path: '/perfil', icon: ICONS.user, exact: false },
     { label: 'Solicitudes', path: '/solicitudes', icon: ICONS.inbox, exact: false },
     { label: 'Ajustes', path: '/configuracion', icon: ICONS.settings, exact: false },
   ];
+
+  protected readonly primaryLinks = computed(() => [
+    ...this.linksBase,
+    ...this.linksPorRol.filter((link) =>
+      this.auth.tieneAlgunRol(...(link.roles ?? [])),
+    ),
+  ]);
 
   constructor() {
     this.router.events
@@ -84,7 +98,6 @@ export class Navbar {
       .subscribe(() => this.closeAll());
 
     this.destroyRef.onDestroy(() => {
-      cancelAnimationFrame(this.beeFrame);
       document.body.classList.remove('nav-locked');
     });
   }
@@ -105,7 +118,8 @@ export class Navbar {
   @HostListener('document:keydown', ['$event'])
   protected onKeydown(event: KeyboardEvent): void {
     if (event.key === 'Escape') {
-      this.closeAll();
+      // Al cerrar con Escape se devuelve el foco al botón hamburguesa.
+      this.closeAll(true);
       return;
     }
 
@@ -127,128 +141,78 @@ export class Navbar {
     }
   }
 
-  @HostListener('document:pointermove', ['$event'])
-  protected onPointerMove(event: PointerEvent): void {
-    if (event.pointerType !== 'mouse' || !this.beeMedia?.matches) {
-      this.stopBee();
-      return;
-    }
-
-    const bee = this.bee()?.nativeElement;
-    const trail = this.beeTrail()?.nativeElement;
-
-    if (!bee || !trail) {
-      return;
-    }
-
-    this.beeTarget.x = Math.min(window.innerWidth - 24, Math.max(24, event.clientX + 18));
-    this.beeTarget.y = Math.min(window.innerHeight - 24, Math.max(24, event.clientY - 20));
-
-    if (!bee.classList.contains('is-active')) {
-      this.beePosition.x = this.beeTarget.x;
-      this.beePosition.y = this.beeTarget.y;
-      this.trailPosition.x = this.beeTarget.x;
-      this.trailPosition.y = this.beeTarget.y;
-      bee.style.transform = `translate3d(${this.beeTarget.x}px, ${this.beeTarget.y}px, 0) translate(-50%, -50%)`;
-      trail.style.transform = `translate3d(${this.beeTarget.x}px, ${this.beeTarget.y}px, 0) translate(-50%, -50%)`;
-      bee.classList.add('is-active');
-      trail.classList.add('is-active');
-    }
-
-    if (!this.beeFrame) {
-      this.beeFrame = requestAnimationFrame(this.tickBee);
-    }
-  }
-
-  @HostListener('document:mouseleave')
-  protected hideBee(): void {
-    this.stopBee();
-  }
-
-  @HostListener('window:blur')
-  protected onWindowBlur(): void {
-    this.stopBee();
-  }
-
-  private readonly tickBee = (): void => {
-    const bee = this.bee()?.nativeElement;
-    const trail = this.beeTrail()?.nativeElement;
-
-    if (!bee || !trail) {
-      this.beeFrame = 0;
-      return;
-    }
-
-    this.beePosition.x += (this.beeTarget.x - this.beePosition.x) * 0.18;
-    this.beePosition.y += (this.beeTarget.y - this.beePosition.y) * 0.18;
-    this.trailPosition.x += (this.beeTarget.x - this.trailPosition.x) * 0.07;
-    this.trailPosition.y += (this.beeTarget.y - this.trailPosition.y) * 0.07;
-
-    const dx = this.beeTarget.x - this.beePosition.x;
-    const dy = this.beeTarget.y - this.beePosition.y;
-    const angle = Math.max(-16, Math.min(16, dx * 0.45));
-
-    bee.style.transform = `translate3d(${this.beePosition.x}px, ${this.beePosition.y}px, 0) translate(-50%, -50%) rotate(${angle}deg)`;
-    trail.style.transform = `translate3d(${this.trailPosition.x}px, ${this.trailPosition.y}px, 0) translate(-50%, -50%)`;
-
-    const trailDx = this.beeTarget.x - this.trailPosition.x;
-    const trailDy = this.beeTarget.y - this.trailPosition.y;
-
-    if (
-      Math.abs(dx) < 0.2 &&
-      Math.abs(dy) < 0.2 &&
-      Math.abs(trailDx) < 0.2 &&
-      Math.abs(trailDy) < 0.2
-    ) {
-      this.beeFrame = 0;
-      return;
-    }
-
-    this.beeFrame = requestAnimationFrame(this.tickBee);
-  };
-
-  private stopBee(): void {
-    cancelAnimationFrame(this.beeFrame);
-    this.beeFrame = 0;
-    this.bee()?.nativeElement.classList.remove('is-active');
-    this.beeTrail()?.nativeElement.classList.remove('is-active');
-  }
-
   protected toggleMobile(): void {
+    if (this.auth.restaurando()) {
+      return;
+    }
+
     const open = !this.mobileOpen();
 
     this.mobileOpen.set(open);
     this.profileOpen.set(false);
     this.searchOpen.set(false);
     document.body.classList.toggle('nav-locked', open);
+
+    if (open) {
+      // Gestión de foco (criterio 6): el primer link del menú recibe el foco.
+      setTimeout(() => {
+        const primerFoco = this.sheet()?.nativeElement.querySelector<HTMLElement>(
+          'a[href], button:not([disabled])',
+        );
+        primerFoco?.focus();
+      });
+    }
   }
 
-  protected closeMobile(): void {
+  protected closeMobile(devolverFoco: boolean = false): void {
     this.mobileOpen.set(false);
     document.body.classList.remove('nav-locked');
+
+    if (devolverFoco) {
+      setTimeout(() => this.burger()?.nativeElement.focus());
+    }
+  }
+
+  /** Trampa de foco dentro del menú mobile mientras está abierto (criterio 6). */
+  protected atraparFoco(event: Event): void {
+    if ((event as KeyboardEvent).key !== 'Tab') {
+      return;
+    }
+
+    const tabEvent = event as KeyboardEvent;
+    const contenedor = this.sheet()?.nativeElement;
+    if (!contenedor) {
+      return;
+    }
+
+    const enfocables = Array.from(
+      contenedor.querySelectorAll<HTMLElement>('a[href], button:not([disabled])'),
+    );
+
+    if (enfocables.length === 0) {
+      return;
+    }
+
+    const primero = enfocables[0];
+    const ultimo = enfocables[enfocables.length - 1];
+    const activo = document.activeElement;
+
+    if (!contenedor.contains(activo)) {
+      tabEvent.preventDefault();
+      primero?.focus();
+    } else if (tabEvent.shiftKey && activo === primero) {
+      tabEvent.preventDefault();
+      ultimo?.focus();
+    } else if (!tabEvent.shiftKey && activo === ultimo) {
+      tabEvent.preventDefault();
+      primero?.focus();
+    }
   }
 
   protected toggleProfile(event: MouseEvent): void {
     event.stopPropagation();
     this.profileOpen.update((open) => !open);
     this.searchOpen.set(false);
-  }
-
-  protected trackNavPointer(event: PointerEvent): void {
-    if (event.pointerType !== 'mouse') {
-      return;
-    }
-
-    const list = event.currentTarget as HTMLElement;
-    const bounds = list.getBoundingClientRect();
-
-    list.style.setProperty('--mx', `${event.clientX - bounds.left}px`);
-    list.style.setProperty('--my', `${event.clientY - bounds.top}px`);
-    list.classList.add('is-tracking');
-  }
-
-  protected resetNavPointer(event: PointerEvent): void {
-    (event.currentTarget as HTMLElement).classList.remove('is-tracking');
   }
 
   protected openSearch(): void {
@@ -283,14 +247,14 @@ export class Navbar {
   }
 
   protected logout(): void {
-    localStorage.removeItem('token');
+    this.auth.cerrarSesion();
     this.closeAll();
     void this.router.navigate(['/login']);
   }
 
-  protected closeAll(): void {
+  protected closeAll(devolverFoco: boolean = false): void {
     this.profileOpen.set(false);
     this.searchOpen.set(false);
-    this.closeMobile();
+    this.closeMobile(devolverFoco);
   }
 }
