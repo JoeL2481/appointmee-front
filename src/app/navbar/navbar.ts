@@ -66,6 +66,7 @@ export class Navbar {
   /** Siempre visibles para cualquier usuario autenticado (criterio 2). */
   protected readonly linksBase: readonly NavItem[] = [
     { label: 'Home', path: '/', icon: ICONS.home, exact: true },
+    { label: 'Sucursales', path: '/sucursales', icon: ICONS.store, exact: false },
     { label: 'Mis Turnos', path: '/mis-turnos', icon: ICONS.calendar, exact: false },
   ];
 
@@ -243,7 +244,7 @@ export class Navbar {
     this.closeSearch();
     this.closeMobile();
 
-    void this.router.navigate(['/'], term ? { queryParams: { busqueda: term } } : {});
+    void this.router.navigate(['/sucursales'], term ? { queryParams: { busqueda: term } } : {});
   }
 
   protected logout(): void {

@@ -7,6 +7,28 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/home/home').then((module) => module.Home),
   },
   {
+    path: 'sucursales',
+    title: 'AppointMee | Sucursales',
+    data: {
+      title: 'Sucursales',
+      description: 'Explorá las sucursales disponibles y encontrá la más cercana.',
+    },
+    loadComponent: () => import('./pages/sucursales/sucursales').then((module) => module.Sucursales),
+  },
+  {
+    path: 'listado-sucursales',
+    redirectTo: 'sucursales',
+  },
+  {
+    path: 'sucursal/:id',
+    title: 'AppointMee | Sucursal',
+    data: {
+      title: 'Sucursal',
+      description: 'Detalle de la sucursal seleccionada.',
+    },
+    loadComponent: () => import('./pages/section/section').then((module) => module.Section),
+  },
+  {
     path: 'mis-turnos',
     title: 'AppointMee | Mis Turnos',
     data: {

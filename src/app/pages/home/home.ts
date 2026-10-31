@@ -2,11 +2,13 @@ import {
   ChangeDetectionStrategy,
   Component,
   HostListener,
+  OnInit,
   computed,
   inject,
   signal,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-home',
@@ -15,7 +17,9 @@ import { RouterLink } from '@angular/router';
   styleUrl: './home.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class Home {
+export class Home implements OnInit {
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly mobileOpen = signal(false);
   private readonly scrolled = signal(false);
   private readonly currentYear = signal(new Date().getFullYear());
@@ -63,6 +67,13 @@ export class Home {
   protected closeMobile(): void {
     this.mobileOpen.set(false);
     document.body.classList.remove('nav-locked');
+  }
+
+  ngOnInit(): void {
+    const qp = this.route.snapshot.queryParams;
+    if (qp['busqueda'] || qp['categoria']) {
+      void this.router.navigate(['/sucursales'], { queryParams: qp });
+    }
   }
 
   protected scrollToSection(event: Event, sectionId: string): void {
