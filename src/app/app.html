@@ -2,6 +2,19 @@
 
 <app-navbar />
 
+@if (apiErrors.notice(); as notice) {
+  <aside class="api-notice" role="alert">
+    <p>{{ notice.error.message }}</p>
+    @if (notice.retry) {
+      <button type="button" (click)="notice.retry?.()">Reintentar</button>
+    }
+    @if (notice.error.status === 403 || notice.error.status === 404) {
+      <a routerLink="/">Ir al inicio</a>
+    }
+    <button type="button" aria-label="Cerrar aviso" (click)="apiErrors.dismiss()">Cerrar</button>
+  </aside>
+}
+
 <main class="app-main" id="contenido" tabindex="-1">
   <router-outlet />
 </main>
