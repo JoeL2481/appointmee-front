@@ -14,6 +14,7 @@
         (input)="actualizarEmail($event)"
       />
     </label>
+    @if (fieldErrors()['email']; as message) { <p class="login__error" role="alert">{{ message }}</p> }
 
     <label class="login__field">
       <span>Contraseña</span>
@@ -26,6 +27,7 @@
         (input)="actualizarContrasenia($event)"
       />
     </label>
+    @if (fieldErrors()['pass'] ?? fieldErrors()['contrasenia']; as message) { <p class="login__error" role="alert">{{ message }}</p> }
 
     @if (error()) {
       <p class="login__error" role="alert">{{ error() }}</p>
