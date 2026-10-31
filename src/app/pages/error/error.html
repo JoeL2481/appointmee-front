@@ -1,0 +1,19 @@
+<section class="error-page" aria-labelledby="error-title">
+  <div class="error-card" aria-live="polite" aria-atomic="true">
+    <span class="error-card__eyebrow">AppointMee</span>
+    <div class="error-card__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M12 8v4m0 4h.01M10.3 3.9 2.8 17a2 2 0 0 0 1.7 3h15a2 2 0 0 0 1.7-3l-7.5-13.1a2 2 0 0 0-3.4 0Z" /></svg>
+    </div>
+    <h1 #titleElement id="error-title" tabindex="-1">Algo salió mal</h1>
+    <p class="error-card__description">No pudimos completar tu solicitud. Podés volver a intentarlo o continuar desde el inicio.</p>
+
+    @if (reference) {
+      <p class="error-card__reference">Código de referencia <span>{{ reference }}</span></p>
+    }
+
+    <div class="error-card__actions">
+      <button class="error-button" type="button" (click)="goBack()">Volver</button>
+      <a class="error-button error-button--quiet" routerLink="/">Ir al inicio</a>
+    </div>
+  </div>
+</section>

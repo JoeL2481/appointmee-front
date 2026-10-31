@@ -52,6 +52,11 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/section/section').then((module) => module.Section),
   },
   {
+    path: 'error',
+    title: 'AppointMee | Algo salió mal',
+    loadComponent: () => import('./pages/error/error').then((module) => module.ErrorPage),
+  },
+  {
     path: 'login',
     title: 'AppointMee | Iniciar sesión',
     loadComponent: () => import('./pages/login/login').then((module) => module.LoginPage),
