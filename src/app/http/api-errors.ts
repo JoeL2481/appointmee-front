@@ -24,7 +24,7 @@ const SAFE_MESSAGES: Readonly<Record<number, string>> = {
 
 @Injectable({ providedIn: 'root' })
 export class ApiErrors {
-  readonly notice = signal<{ error: ApiError; retry?: () => void } | null>(null);
+  readonly notice = signal<{ error: ApiError; retry?: () => void; retrying?: boolean } | null>(null);
 
   map(response: HttpErrorResponse): ApiError {
     const reference = crypto.randomUUID();
@@ -100,14 +100,17 @@ export const apiErrorInterceptor: HttpInterceptorFn = (request, next) => {
       } else {
         const canRetry = [500, 502, 503].includes(cause.status);
         const retry: (() => void) | undefined = canRetry ? () => {
-            void next(request).subscribe({
-              next: () => errors.dismiss(),
-              error: (retryCause: HttpErrorResponse) => {
-                const retryError = errors.map(retryCause);
-                errors.notice.set({ error: retryError, retry });
-              },
-            });
-          } : undefined;
+          const current = errors.notice();
+          if (current?.retrying) return;
+          errors.notice.update((notice) => notice ? { ...notice, retrying: true } : notice);
+          void next(request).subscribe({
+            next: () => errors.dismiss(),
+            error: (retryCause: HttpErrorResponse) => {
+              const retryError = errors.map(retryCause);
+              errors.notice.set({ error: retryError, retry, retrying: false });
+            },
+          });
+        } : undefined;
         errors.notice.set({ error, retry });
       }
     }
